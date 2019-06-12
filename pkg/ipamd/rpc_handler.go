@@ -80,6 +80,42 @@ func (s *server) AddNetwork(ctx context.Context, in *rpc.AddNetworkRequest) (*rp
 	return &resp, nil
 }
 
+func (s *server) CheckNetwork(ctx context.Context, in *rpc.CheckNetworkRequest) (*rpc.CheckNetworkReply, error) {
+	log.Infof("Received CheckNetwork for NS %s, Pod %s, NameSpace %s, Container %s, ifname %s",
+		in.Netns, in.K8S_POD_NAME, in.K8S_POD_NAMESPACE, in.K8S_POD_INFRA_CONTAINER_ID, in.IfName)
+
+	addr, deviceNumber, err := s.ipamContext.dataStore.CheckPodIPv4Address(&k8sapi.K8SPodInfo{
+		Name:      in.K8S_POD_NAME,
+		Namespace: in.K8S_POD_NAMESPACE,
+		Sandbox:   in.K8S_POD_INFRA_CONTAINER_ID})
+
+	var pbVPCcidrs []string
+	for _, cidr := range s.ipamContext.awsClient.GetVPCIPv4CIDRs() {
+		pbVPCcidrs = append(pbVPCcidrs, *cidr)
+	}
+
+	useExternalSNAT := s.ipamContext.networkClient.UseExternalSNAT()
+	if !useExternalSNAT {
+		for _, cidr := range s.ipamContext.networkClient.GetExcludeSNATCIDRs() {
+			log.Debugf("CIDR SNAT Exclusion %s", cidr)
+			pbVPCcidrs = append(pbVPCcidrs, cidr)
+		}
+	}
+
+	resp := rpc.CheckNetworkReply{
+		Success:         err == nil,
+		IPv4Addr:        addr,
+		IPv4Subnet:      "",
+		DeviceNumber:    int32(deviceNumber),
+		UseExternalSNAT: useExternalSNAT,
+		VPCcidrs:        pbVPCcidrs,
+	}
+
+	log.Infof("Send CheckNetworkReply: IPv4Addr %s, DeviceNumber: %d, err: %v", addr, deviceNumber, err)
+	checkIPCnt.Inc()
+	return &resp, nil
+}
+
 func (s *server) DelNetwork(ctx context.Context, in *rpc.DelNetworkRequest) (*rpc.DelNetworkReply, error) {
 	log.Infof("Received DelNetwork for IP %s, Pod %s, Namespace %s, Sandbox %s",
 		in.IPv4Addr, in.K8S_POD_NAME, in.K8S_POD_NAMESPACE, in.K8S_POD_INFRA_CONTAINER_ID)

@@ -3,13 +3,12 @@
 
 package rpc
 
-import proto "github.com/golang/protobuf/proto"
-import fmt "fmt"
-import math "math"
-
 import (
-	context "golang.org/x/net/context"
+	context "context"
+	fmt "fmt"
+	proto "github.com/golang/protobuf/proto"
 	grpc "google.golang.org/grpc"
+	math "math"
 )
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -21,14 +20,14 @@ var _ = math.Inf
 // is compatible with the proto package it is being compiled against.
 // A compilation error at this line likely means your copy of the
 // proto package needs to be updated.
-const _ = proto.ProtoPackageIsVersion2 // please upgrade the proto package
+const _ = proto.ProtoPackageIsVersion3 // please upgrade the proto package
 
 type AddNetworkRequest struct {
-	K8S_POD_NAME               string   `protobuf:"bytes,1,opt,name=K8S_POD_NAME,json=k8SPODNAME,proto3" json:"K8S_POD_NAME,omitempty"`
-	K8S_POD_NAMESPACE          string   `protobuf:"bytes,2,opt,name=K8S_POD_NAMESPACE,json=k8SPODNAMESPACE,proto3" json:"K8S_POD_NAMESPACE,omitempty"`
-	K8S_POD_INFRA_CONTAINER_ID string   `protobuf:"bytes,3,opt,name=K8S_POD_INFRA_CONTAINER_ID,json=k8SPODINFRACONTAINERID,proto3" json:"K8S_POD_INFRA_CONTAINER_ID,omitempty"`
-	Netns                      string   `protobuf:"bytes,4,opt,name=Netns,json=netns,proto3" json:"Netns,omitempty"`
-	IfName                     string   `protobuf:"bytes,5,opt,name=IfName,json=ifName,proto3" json:"IfName,omitempty"`
+	K8S_POD_NAME               string   `protobuf:"bytes,1,opt,name=K8S_POD_NAME,json=K8SPODNAME,proto3" json:"K8S_POD_NAME,omitempty"`
+	K8S_POD_NAMESPACE          string   `protobuf:"bytes,2,opt,name=K8S_POD_NAMESPACE,json=K8SPODNAMESPACE,proto3" json:"K8S_POD_NAMESPACE,omitempty"`
+	K8S_POD_INFRA_CONTAINER_ID string   `protobuf:"bytes,3,opt,name=K8S_POD_INFRA_CONTAINER_ID,json=K8SPODINFRACONTAINERID,proto3" json:"K8S_POD_INFRA_CONTAINER_ID,omitempty"`
+	Netns                      string   `protobuf:"bytes,4,opt,name=Netns,proto3" json:"Netns,omitempty"`
+	IfName                     string   `protobuf:"bytes,5,opt,name=IfName,proto3" json:"IfName,omitempty"`
 	XXX_NoUnkeyedLiteral       struct{} `json:"-"`
 	XXX_unrecognized           []byte   `json:"-"`
 	XXX_sizecache              int32    `json:"-"`
@@ -38,16 +37,17 @@ func (m *AddNetworkRequest) Reset()         { *m = AddNetworkRequest{} }
 func (m *AddNetworkRequest) String() string { return proto.CompactTextString(m) }
 func (*AddNetworkRequest) ProtoMessage()    {}
 func (*AddNetworkRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_rpc_e2d1762f92c6107e, []int{0}
+	return fileDescriptor_77a6da22d6a3feb1, []int{0}
 }
+
 func (m *AddNetworkRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_AddNetworkRequest.Unmarshal(m, b)
 }
 func (m *AddNetworkRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_AddNetworkRequest.Marshal(b, m, deterministic)
 }
-func (dst *AddNetworkRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AddNetworkRequest.Merge(dst, src)
+func (m *AddNetworkRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AddNetworkRequest.Merge(m, src)
 }
 func (m *AddNetworkRequest) XXX_Size() int {
 	return xxx_messageInfo_AddNetworkRequest.Size(m)
@@ -94,12 +94,12 @@ func (m *AddNetworkRequest) GetIfName() string {
 }
 
 type AddNetworkReply struct {
-	Success              bool     `protobuf:"varint,1,opt,name=Success,json=success,proto3" json:"Success,omitempty"`
-	IPv4Addr             string   `protobuf:"bytes,2,opt,name=IPv4Addr,json=iPv4Addr,proto3" json:"IPv4Addr,omitempty"`
-	IPv4Subnet           string   `protobuf:"bytes,3,opt,name=IPv4Subnet,json=iPv4Subnet,proto3" json:"IPv4Subnet,omitempty"`
-	DeviceNumber         int32    `protobuf:"varint,4,opt,name=DeviceNumber,json=deviceNumber,proto3" json:"DeviceNumber,omitempty"`
-	UseExternalSNAT      bool     `protobuf:"varint,5,opt,name=UseExternalSNAT,json=useExternalSNAT,proto3" json:"UseExternalSNAT,omitempty"`
-	VPCcidrs             []string `protobuf:"bytes,6,rep,name=VPCcidrs,json=vPCcidrs,proto3" json:"VPCcidrs,omitempty"`
+	Success              bool     `protobuf:"varint,1,opt,name=Success,proto3" json:"Success,omitempty"`
+	IPv4Addr             string   `protobuf:"bytes,2,opt,name=IPv4Addr,proto3" json:"IPv4Addr,omitempty"`
+	IPv4Subnet           string   `protobuf:"bytes,3,opt,name=IPv4Subnet,proto3" json:"IPv4Subnet,omitempty"`
+	DeviceNumber         int32    `protobuf:"varint,4,opt,name=DeviceNumber,proto3" json:"DeviceNumber,omitempty"`
+	UseExternalSNAT      bool     `protobuf:"varint,5,opt,name=UseExternalSNAT,proto3" json:"UseExternalSNAT,omitempty"`
+	VPCcidrs             []string `protobuf:"bytes,6,rep,name=VPCcidrs,proto3" json:"VPCcidrs,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -109,16 +109,17 @@ func (m *AddNetworkReply) Reset()         { *m = AddNetworkReply{} }
 func (m *AddNetworkReply) String() string { return proto.CompactTextString(m) }
 func (*AddNetworkReply) ProtoMessage()    {}
 func (*AddNetworkReply) Descriptor() ([]byte, []int) {
-	return fileDescriptor_rpc_e2d1762f92c6107e, []int{1}
+	return fileDescriptor_77a6da22d6a3feb1, []int{1}
 }
+
 func (m *AddNetworkReply) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_AddNetworkReply.Unmarshal(m, b)
 }
 func (m *AddNetworkReply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_AddNetworkReply.Marshal(b, m, deterministic)
 }
-func (dst *AddNetworkReply) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_AddNetworkReply.Merge(dst, src)
+func (m *AddNetworkReply) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_AddNetworkReply.Merge(m, src)
 }
 func (m *AddNetworkReply) XXX_Size() int {
 	return xxx_messageInfo_AddNetworkReply.Size(m)
@@ -171,12 +172,162 @@ func (m *AddNetworkReply) GetVPCcidrs() []string {
 	return nil
 }
 
+type CheckNetworkRequest struct {
+	K8S_POD_NAME               string   `protobuf:"bytes,1,opt,name=K8S_POD_NAME,json=K8SPODNAME,proto3" json:"K8S_POD_NAME,omitempty"`
+	K8S_POD_NAMESPACE          string   `protobuf:"bytes,2,opt,name=K8S_POD_NAMESPACE,json=K8SPODNAMESPACE,proto3" json:"K8S_POD_NAMESPACE,omitempty"`
+	K8S_POD_INFRA_CONTAINER_ID string   `protobuf:"bytes,3,opt,name=K8S_POD_INFRA_CONTAINER_ID,json=K8SPODINFRACONTAINERID,proto3" json:"K8S_POD_INFRA_CONTAINER_ID,omitempty"`
+	Netns                      string   `protobuf:"bytes,4,opt,name=Netns,proto3" json:"Netns,omitempty"`
+	IfName                     string   `protobuf:"bytes,5,opt,name=IfName,proto3" json:"IfName,omitempty"`
+	XXX_NoUnkeyedLiteral       struct{} `json:"-"`
+	XXX_unrecognized           []byte   `json:"-"`
+	XXX_sizecache              int32    `json:"-"`
+}
+
+func (m *CheckNetworkRequest) Reset()         { *m = CheckNetworkRequest{} }
+func (m *CheckNetworkRequest) String() string { return proto.CompactTextString(m) }
+func (*CheckNetworkRequest) ProtoMessage()    {}
+func (*CheckNetworkRequest) Descriptor() ([]byte, []int) {
+	return fileDescriptor_77a6da22d6a3feb1, []int{2}
+}
+
+func (m *CheckNetworkRequest) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_CheckNetworkRequest.Unmarshal(m, b)
+}
+func (m *CheckNetworkRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_CheckNetworkRequest.Marshal(b, m, deterministic)
+}
+func (m *CheckNetworkRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CheckNetworkRequest.Merge(m, src)
+}
+func (m *CheckNetworkRequest) XXX_Size() int {
+	return xxx_messageInfo_CheckNetworkRequest.Size(m)
+}
+func (m *CheckNetworkRequest) XXX_DiscardUnknown() {
+	xxx_messageInfo_CheckNetworkRequest.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_CheckNetworkRequest proto.InternalMessageInfo
+
+func (m *CheckNetworkRequest) GetK8S_POD_NAME() string {
+	if m != nil {
+		return m.K8S_POD_NAME
+	}
+	return ""
+}
+
+func (m *CheckNetworkRequest) GetK8S_POD_NAMESPACE() string {
+	if m != nil {
+		return m.K8S_POD_NAMESPACE
+	}
+	return ""
+}
+
+func (m *CheckNetworkRequest) GetK8S_POD_INFRA_CONTAINER_ID() string {
+	if m != nil {
+		return m.K8S_POD_INFRA_CONTAINER_ID
+	}
+	return ""
+}
+
+func (m *CheckNetworkRequest) GetNetns() string {
+	if m != nil {
+		return m.Netns
+	}
+	return ""
+}
+
+func (m *CheckNetworkRequest) GetIfName() string {
+	if m != nil {
+		return m.IfName
+	}
+	return ""
+}
+
+type CheckNetworkReply struct {
+	Success              bool     `protobuf:"varint,1,opt,name=Success,proto3" json:"Success,omitempty"`
+	IPv4Addr             string   `protobuf:"bytes,2,opt,name=IPv4Addr,proto3" json:"IPv4Addr,omitempty"`
+	IPv4Subnet           string   `protobuf:"bytes,3,opt,name=IPv4Subnet,proto3" json:"IPv4Subnet,omitempty"`
+	DeviceNumber         int32    `protobuf:"varint,4,opt,name=DeviceNumber,proto3" json:"DeviceNumber,omitempty"`
+	UseExternalSNAT      bool     `protobuf:"varint,5,opt,name=UseExternalSNAT,proto3" json:"UseExternalSNAT,omitempty"`
+	VPCcidrs             []string `protobuf:"bytes,6,rep,name=VPCcidrs,proto3" json:"VPCcidrs,omitempty"`
+	XXX_NoUnkeyedLiteral struct{} `json:"-"`
+	XXX_unrecognized     []byte   `json:"-"`
+	XXX_sizecache        int32    `json:"-"`
+}
+
+func (m *CheckNetworkReply) Reset()         { *m = CheckNetworkReply{} }
+func (m *CheckNetworkReply) String() string { return proto.CompactTextString(m) }
+func (*CheckNetworkReply) ProtoMessage()    {}
+func (*CheckNetworkReply) Descriptor() ([]byte, []int) {
+	return fileDescriptor_77a6da22d6a3feb1, []int{3}
+}
+
+func (m *CheckNetworkReply) XXX_Unmarshal(b []byte) error {
+	return xxx_messageInfo_CheckNetworkReply.Unmarshal(m, b)
+}
+func (m *CheckNetworkReply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
+	return xxx_messageInfo_CheckNetworkReply.Marshal(b, m, deterministic)
+}
+func (m *CheckNetworkReply) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_CheckNetworkReply.Merge(m, src)
+}
+func (m *CheckNetworkReply) XXX_Size() int {
+	return xxx_messageInfo_CheckNetworkReply.Size(m)
+}
+func (m *CheckNetworkReply) XXX_DiscardUnknown() {
+	xxx_messageInfo_CheckNetworkReply.DiscardUnknown(m)
+}
+
+var xxx_messageInfo_CheckNetworkReply proto.InternalMessageInfo
+
+func (m *CheckNetworkReply) GetSuccess() bool {
+	if m != nil {
+		return m.Success
+	}
+	return false
+}
+
+func (m *CheckNetworkReply) GetIPv4Addr() string {
+	if m != nil {
+		return m.IPv4Addr
+	}
+	return ""
+}
+
+func (m *CheckNetworkReply) GetIPv4Subnet() string {
+	if m != nil {
+		return m.IPv4Subnet
+	}
+	return ""
+}
+
+func (m *CheckNetworkReply) GetDeviceNumber() int32 {
+	if m != nil {
+		return m.DeviceNumber
+	}
+	return 0
+}
+
+func (m *CheckNetworkReply) GetUseExternalSNAT() bool {
+	if m != nil {
+		return m.UseExternalSNAT
+	}
+	return false
+}
+
+func (m *CheckNetworkReply) GetVPCcidrs() []string {
+	if m != nil {
+		return m.VPCcidrs
+	}
+	return nil
+}
+
 type DelNetworkRequest struct {
-	K8S_POD_NAME               string   `protobuf:"bytes,1,opt,name=K8S_POD_NAME,json=k8SPODNAME,proto3" json:"K8S_POD_NAME,omitempty"`
-	K8S_POD_NAMESPACE          string   `protobuf:"bytes,2,opt,name=K8S_POD_NAMESPACE,json=k8SPODNAMESPACE,proto3" json:"K8S_POD_NAMESPACE,omitempty"`
-	K8S_POD_INFRA_CONTAINER_ID string   `protobuf:"bytes,3,opt,name=K8S_POD_INFRA_CONTAINER_ID,json=k8SPODINFRACONTAINERID,proto3" json:"K8S_POD_INFRA_CONTAINER_ID,omitempty"`
-	IPv4Addr                   string   `protobuf:"bytes,4,opt,name=IPv4Addr,json=iPv4Addr,proto3" json:"IPv4Addr,omitempty"`
-	Reason                     string   `protobuf:"bytes,5,opt,name=Reason,json=reason,proto3" json:"Reason,omitempty"`
+	K8S_POD_NAME               string   `protobuf:"bytes,1,opt,name=K8S_POD_NAME,json=K8SPODNAME,proto3" json:"K8S_POD_NAME,omitempty"`
+	K8S_POD_NAMESPACE          string   `protobuf:"bytes,2,opt,name=K8S_POD_NAMESPACE,json=K8SPODNAMESPACE,proto3" json:"K8S_POD_NAMESPACE,omitempty"`
+	K8S_POD_INFRA_CONTAINER_ID string   `protobuf:"bytes,3,opt,name=K8S_POD_INFRA_CONTAINER_ID,json=K8SPODINFRACONTAINERID,proto3" json:"K8S_POD_INFRA_CONTAINER_ID,omitempty"`
+	IPv4Addr                   string   `protobuf:"bytes,4,opt,name=IPv4Addr,proto3" json:"IPv4Addr,omitempty"`
+	Reason                     string   `protobuf:"bytes,5,opt,name=Reason,proto3" json:"Reason,omitempty"`
 	XXX_NoUnkeyedLiteral       struct{} `json:"-"`
 	XXX_unrecognized           []byte   `json:"-"`
 	XXX_sizecache              int32    `json:"-"`
@@ -186,16 +337,17 @@ func (m *DelNetworkRequest) Reset()         { *m = DelNetworkRequest{} }
 func (m *DelNetworkRequest) String() string { return proto.CompactTextString(m) }
 func (*DelNetworkRequest) ProtoMessage()    {}
 func (*DelNetworkRequest) Descriptor() ([]byte, []int) {
-	return fileDescriptor_rpc_e2d1762f92c6107e, []int{2}
+	return fileDescriptor_77a6da22d6a3feb1, []int{4}
 }
+
 func (m *DelNetworkRequest) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_DelNetworkRequest.Unmarshal(m, b)
 }
 func (m *DelNetworkRequest) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_DelNetworkRequest.Marshal(b, m, deterministic)
 }
-func (dst *DelNetworkRequest) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_DelNetworkRequest.Merge(dst, src)
+func (m *DelNetworkRequest) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DelNetworkRequest.Merge(m, src)
 }
 func (m *DelNetworkRequest) XXX_Size() int {
 	return xxx_messageInfo_DelNetworkRequest.Size(m)
@@ -242,9 +394,9 @@ func (m *DelNetworkRequest) GetReason() string {
 }
 
 type DelNetworkReply struct {
-	Success              bool     `protobuf:"varint,1,opt,name=Success,json=success,proto3" json:"Success,omitempty"`
-	IPv4Addr             string   `protobuf:"bytes,2,opt,name=IPv4Addr,json=iPv4Addr,proto3" json:"IPv4Addr,omitempty"`
-	DeviceNumber         int32    `protobuf:"varint,3,opt,name=DeviceNumber,json=deviceNumber,proto3" json:"DeviceNumber,omitempty"`
+	Success              bool     `protobuf:"varint,1,opt,name=Success,proto3" json:"Success,omitempty"`
+	IPv4Addr             string   `protobuf:"bytes,2,opt,name=IPv4Addr,proto3" json:"IPv4Addr,omitempty"`
+	DeviceNumber         int32    `protobuf:"varint,3,opt,name=DeviceNumber,proto3" json:"DeviceNumber,omitempty"`
 	XXX_NoUnkeyedLiteral struct{} `json:"-"`
 	XXX_unrecognized     []byte   `json:"-"`
 	XXX_sizecache        int32    `json:"-"`
@@ -254,16 +406,17 @@ func (m *DelNetworkReply) Reset()         { *m = DelNetworkReply{} }
 func (m *DelNetworkReply) String() string { return proto.CompactTextString(m) }
 func (*DelNetworkReply) ProtoMessage()    {}
 func (*DelNetworkReply) Descriptor() ([]byte, []int) {
-	return fileDescriptor_rpc_e2d1762f92c6107e, []int{3}
+	return fileDescriptor_77a6da22d6a3feb1, []int{5}
 }
+
 func (m *DelNetworkReply) XXX_Unmarshal(b []byte) error {
 	return xxx_messageInfo_DelNetworkReply.Unmarshal(m, b)
 }
 func (m *DelNetworkReply) XXX_Marshal(b []byte, deterministic bool) ([]byte, error) {
 	return xxx_messageInfo_DelNetworkReply.Marshal(b, m, deterministic)
 }
-func (dst *DelNetworkReply) XXX_Merge(src proto.Message) {
-	xxx_messageInfo_DelNetworkReply.Merge(dst, src)
+func (m *DelNetworkReply) XXX_Merge(src proto.Message) {
+	xxx_messageInfo_DelNetworkReply.Merge(m, src)
 }
 func (m *DelNetworkReply) XXX_Size() int {
 	return xxx_messageInfo_DelNetworkReply.Size(m)
@@ -298,8 +451,44 @@ func (m *DelNetworkReply) GetDeviceNumber() int32 {
 func init() {
 	proto.RegisterType((*AddNetworkRequest)(nil), "rpc.AddNetworkRequest")
 	proto.RegisterType((*AddNetworkReply)(nil), "rpc.AddNetworkReply")
+	proto.RegisterType((*CheckNetworkRequest)(nil), "rpc.CheckNetworkRequest")
+	proto.RegisterType((*CheckNetworkReply)(nil), "rpc.CheckNetworkReply")
 	proto.RegisterType((*DelNetworkRequest)(nil), "rpc.DelNetworkRequest")
 	proto.RegisterType((*DelNetworkReply)(nil), "rpc.DelNetworkReply")
+}
+
+func init() { proto.RegisterFile("rpc.proto", fileDescriptor_77a6da22d6a3feb1) }
+
+var fileDescriptor_77a6da22d6a3feb1 = []byte{
+	// 435 bytes of a gzipped FileDescriptorProto
+	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xdc, 0x54, 0xc1, 0x6e, 0x9b, 0x40,
+	0x10, 0xcd, 0xd6, 0xb1, 0xeb, 0x8c, 0x2c, 0x59, 0xde, 0x46, 0x68, 0xe5, 0x43, 0x65, 0x71, 0x8a,
+	0x7a, 0xc8, 0xa1, 0xed, 0x21, 0xaa, 0x72, 0x21, 0xe0, 0x4a, 0x28, 0xea, 0x1a, 0x2d, 0x69, 0xaf,
+	0x96, 0xbd, 0x4c, 0xd5, 0x08, 0x02, 0x74, 0x81, 0xb4, 0xf9, 0xc6, 0xb6, 0x87, 0xa8, 0x3f, 0x54,
+	0xb1, 0x40, 0x4c, 0x20, 0xa7, 0x9e, 0x22, 0xdf, 0x78, 0x6f, 0xde, 0xa2, 0x37, 0xf3, 0x76, 0x07,
+	0x8e, 0x54, 0x2a, 0x4f, 0x53, 0x95, 0xe4, 0x09, 0x1d, 0xa8, 0x54, 0x9a, 0xbf, 0x08, 0xcc, 0xac,
+	0x20, 0xe0, 0x98, 0xff, 0x48, 0x54, 0x28, 0xf0, 0x7b, 0x81, 0x59, 0x4e, 0x17, 0x30, 0xb9, 0x3c,
+	0xf3, 0xd7, 0xde, 0xca, 0x59, 0x73, 0xeb, 0xd3, 0x92, 0x91, 0x05, 0x39, 0x39, 0x12, 0x70, 0x79,
+	0xe6, 0x7b, 0x2b, 0xa7, 0x64, 0xe8, 0x1b, 0x98, 0xb5, 0x15, 0xbe, 0x67, 0xd9, 0x4b, 0xf6, 0x42,
+	0xcb, 0xa6, 0x3b, 0x99, 0xa6, 0xe9, 0x07, 0x98, 0x37, 0x5a, 0x97, 0x7f, 0x14, 0xd6, 0xda, 0x5e,
+	0xf1, 0x2b, 0xcb, 0xe5, 0x4b, 0xb1, 0x76, 0x1d, 0x36, 0xd0, 0x87, 0x8c, 0xea, 0x90, 0xae, 0x3f,
+	0x94, 0x5d, 0x87, 0x1e, 0xc3, 0x90, 0x63, 0x1e, 0x67, 0xec, 0x50, 0xcb, 0x2a, 0x40, 0x0d, 0x18,
+	0xb9, 0x5f, 0xf9, 0xe6, 0x06, 0xd9, 0x50, 0xd3, 0x35, 0x32, 0xef, 0x09, 0x4c, 0xdb, 0xdd, 0xa4,
+	0xd1, 0x1d, 0x65, 0xf0, 0xd2, 0x2f, 0xa4, 0xc4, 0x2c, 0xd3, 0x6d, 0x8c, 0x45, 0x03, 0xe9, 0x1c,
+	0xc6, 0xae, 0x77, 0xfb, 0xde, 0x0a, 0x02, 0x55, 0x5b, 0x7f, 0xc0, 0xf4, 0x35, 0x40, 0xf9, 0xed,
+	0x17, 0xdb, 0x18, 0xf3, 0xda, 0x63, 0x8b, 0xa1, 0x26, 0x4c, 0x1c, 0xbc, 0xbd, 0x96, 0xc8, 0x8b,
+	0x9b, 0x2d, 0x2a, 0x6d, 0x6f, 0x28, 0x1e, 0x71, 0xf4, 0x04, 0xa6, 0x9f, 0x33, 0x5c, 0xfe, 0xcc,
+	0x51, 0xc5, 0x9b, 0xc8, 0xe7, 0xd6, 0x95, 0xb6, 0x3b, 0x16, 0x5d, 0xba, 0x74, 0xf2, 0xc5, 0xb3,
+	0xe5, 0x75, 0xa0, 0x32, 0x36, 0x5a, 0x0c, 0x4a, 0x27, 0x0d, 0x36, 0xff, 0x10, 0x78, 0x65, 0x7f,
+	0x43, 0x19, 0xee, 0x49, 0x46, 0x7f, 0x09, 0xcc, 0x1e, 0xf7, 0xb3, 0x0f, 0x29, 0xdd, 0x13, 0x98,
+	0x39, 0x18, 0x3d, 0xdb, 0x8c, 0xda, 0x53, 0x3c, 0xec, 0x4c, 0xd1, 0x80, 0x91, 0xc0, 0x4d, 0x96,
+	0xc4, 0x4d, 0x52, 0x15, 0x32, 0x43, 0x98, 0xb6, 0x5b, 0xfa, 0xff, 0x98, 0xba, 0x31, 0x0c, 0xfa,
+	0x31, 0xbc, 0xfd, 0x4d, 0x00, 0x6c, 0xee, 0x5e, 0x6c, 0x64, 0x88, 0x71, 0x40, 0xcf, 0x01, 0x76,
+	0x0f, 0x99, 0x1a, 0xa7, 0xe5, 0xda, 0xea, 0xed, 0xa9, 0xf9, 0x71, 0x8f, 0x4f, 0xa3, 0x3b, 0xf3,
+	0x80, 0x5e, 0xc0, 0xa4, 0x7d, 0xc5, 0x28, 0xd3, 0xba, 0x27, 0x5e, 0xd1, 0xdc, 0x78, 0xa2, 0x52,
+	0xfd, 0xe3, 0x1c, 0x60, 0xd7, 0x7d, 0xed, 0xa0, 0x97, 0x70, 0xed, 0xa0, 0x33, 0x26, 0xf3, 0x60,
+	0x3b, 0xd2, 0x3b, 0xf6, 0xdd, 0xbf, 0x00, 0x00, 0x00, 0xff, 0xff, 0x64, 0x6d, 0x65, 0x86, 0x70,
+	0x05, 0x00, 0x00,
 }
 
 // Reference imports to suppress errors if they are not otherwise used.
@@ -315,6 +504,7 @@ const _ = grpc.SupportPackageIsVersion4
 // For semantics around ctx use and closing/ending streaming RPCs, please refer to https://godoc.org/google.golang.org/grpc#ClientConn.NewStream.
 type CNIBackendClient interface {
 	AddNetwork(ctx context.Context, in *AddNetworkRequest, opts ...grpc.CallOption) (*AddNetworkReply, error)
+	CheckNetwork(ctx context.Context, in *CheckNetworkRequest, opts ...grpc.CallOption) (*CheckNetworkReply, error)
 	DelNetwork(ctx context.Context, in *DelNetworkRequest, opts ...grpc.CallOption) (*DelNetworkReply, error)
 }
 
@@ -335,6 +525,15 @@ func (c *cNIBackendClient) AddNetwork(ctx context.Context, in *AddNetworkRequest
 	return out, nil
 }
 
+func (c *cNIBackendClient) CheckNetwork(ctx context.Context, in *CheckNetworkRequest, opts ...grpc.CallOption) (*CheckNetworkReply, error) {
+	out := new(CheckNetworkReply)
+	err := c.cc.Invoke(ctx, "/rpc.CNIBackend/CheckNetwork", in, out, opts...)
+	if err != nil {
+		return nil, err
+	}
+	return out, nil
+}
+
 func (c *cNIBackendClient) DelNetwork(ctx context.Context, in *DelNetworkRequest, opts ...grpc.CallOption) (*DelNetworkReply, error) {
 	out := new(DelNetworkReply)
 	err := c.cc.Invoke(ctx, "/rpc.CNIBackend/DelNetwork", in, out, opts...)
@@ -347,6 +546,7 @@ func (c *cNIBackendClient) DelNetwork(ctx context.Context, in *DelNetworkRequest
 // CNIBackendServer is the server API for CNIBackend service.
 type CNIBackendServer interface {
 	AddNetwork(context.Context, *AddNetworkRequest) (*AddNetworkReply, error)
+	CheckNetwork(context.Context, *CheckNetworkRequest) (*CheckNetworkReply, error)
 	DelNetwork(context.Context, *DelNetworkRequest) (*DelNetworkReply, error)
 }
 
@@ -368,6 +568,24 @@ func _CNIBackend_AddNetwork_Handler(srv interface{}, ctx context.Context, dec fu
 	}
 	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
 		return srv.(CNIBackendServer).AddNetwork(ctx, req.(*AddNetworkRequest))
+	}
+	return interceptor(ctx, in, info, handler)
+}
+
+func _CNIBackend_CheckNetwork_Handler(srv interface{}, ctx context.Context, dec func(interface{}) error, interceptor grpc.UnaryServerInterceptor) (interface{}, error) {
+	in := new(CheckNetworkRequest)
+	if err := dec(in); err != nil {
+		return nil, err
+	}
+	if interceptor == nil {
+		return srv.(CNIBackendServer).CheckNetwork(ctx, in)
+	}
+	info := &grpc.UnaryServerInfo{
+		Server:     srv,
+		FullMethod: "/rpc.CNIBackend/CheckNetwork",
+	}
+	handler := func(ctx context.Context, req interface{}) (interface{}, error) {
+		return srv.(CNIBackendServer).CheckNetwork(ctx, req.(*CheckNetworkRequest))
 	}
 	return interceptor(ctx, in, info, handler)
 }
@@ -399,42 +617,14 @@ var _CNIBackend_serviceDesc = grpc.ServiceDesc{
 			Handler:    _CNIBackend_AddNetwork_Handler,
 		},
 		{
+			MethodName: "CheckNetwork",
+			Handler:    _CNIBackend_CheckNetwork_Handler,
+		},
+		{
 			MethodName: "DelNetwork",
 			Handler:    _CNIBackend_DelNetwork_Handler,
 		},
 	},
 	Streams:  []grpc.StreamDesc{},
 	Metadata: "rpc.proto",
-}
-
-func init() { proto.RegisterFile("rpc.proto", fileDescriptor_rpc_e2d1762f92c6107e) }
-
-var fileDescriptor_rpc_e2d1762f92c6107e = []byte{
-	// 403 bytes of a gzipped FileDescriptorProto
-	0x1f, 0x8b, 0x08, 0x00, 0x00, 0x00, 0x00, 0x00, 0x02, 0xff, 0xcc, 0x53, 0x41, 0x8b, 0x9b, 0x40,
-	0x18, 0x5d, 0xeb, 0xea, 0xba, 0x1f, 0x01, 0xc9, 0xb0, 0x88, 0xe4, 0x50, 0x82, 0xa7, 0xa5, 0x87,
-	0x3d, 0xb4, 0x3d, 0x84, 0xd2, 0x8b, 0x55, 0x0b, 0x52, 0x3a, 0x91, 0x31, 0xed, 0x55, 0x8c, 0x4e,
-	0x41, 0x34, 0x6a, 0x67, 0x34, 0x6d, 0xfe, 0x41, 0xff, 0x5b, 0x4f, 0xfd, 0x47, 0x65, 0x26, 0x26,
-	0xb1, 0xf1, 0xd6, 0xd3, 0x1e, 0xdf, 0xfb, 0xbe, 0x07, 0xef, 0xcd, 0x9b, 0x0f, 0xee, 0x59, 0x9b,
-	0x3d, 0xb5, 0xac, 0xe9, 0x1a, 0xa4, 0xb2, 0x36, 0x73, 0x7e, 0x2b, 0x30, 0x77, 0xf3, 0x1c, 0xd3,
-	0xee, 0x47, 0xc3, 0x4a, 0x42, 0xbf, 0xf7, 0x94, 0x77, 0x68, 0x09, 0xb3, 0x4f, 0xab, 0x38, 0x89,
-	0xd6, 0x7e, 0x82, 0xdd, 0xcf, 0x81, 0xad, 0x2c, 0x95, 0xc7, 0x7b, 0x02, 0xe5, 0x2a, 0x8e, 0xd6,
-	0xbe, 0x60, 0xd0, 0x2b, 0x98, 0x8f, 0x37, 0xe2, 0xc8, 0xf5, 0x02, 0xfb, 0x85, 0x5c, 0x33, 0x2f,
-	0x6b, 0x92, 0x46, 0xef, 0x60, 0x71, 0xda, 0x0d, 0xf1, 0x47, 0xe2, 0x26, 0xde, 0x1a, 0x6f, 0xdc,
-	0x10, 0x07, 0x24, 0x09, 0x7d, 0x5b, 0x95, 0x22, 0xeb, 0x28, 0x92, 0xf3, 0xf3, 0x38, 0xf4, 0xd1,
-	0x03, 0x68, 0x98, 0x76, 0x35, 0xb7, 0x6f, 0xe5, 0x9a, 0x56, 0x0b, 0x80, 0x2c, 0xd0, 0xc3, 0x6f,
-	0x38, 0xdd, 0x51, 0x5b, 0x93, 0xb4, 0x5e, 0x48, 0xe4, 0xfc, 0x51, 0xc0, 0x1c, 0xa7, 0x69, 0xab,
-	0x03, 0xb2, 0xe1, 0x2e, 0xee, 0xb3, 0x8c, 0x72, 0x2e, 0x63, 0x18, 0xe4, 0x8e, 0x1f, 0x21, 0x5a,
-	0x80, 0x11, 0x46, 0xfb, 0xb7, 0x6e, 0x9e, 0xb3, 0xc1, 0xba, 0x51, 0x0c, 0x18, 0xbd, 0x04, 0x10,
-	0xb3, 0xb8, 0xdf, 0xd6, 0xb4, 0x1b, 0x3c, 0x42, 0x71, 0x66, 0x90, 0x03, 0x33, 0x9f, 0xee, 0x8b,
-	0x8c, 0xe2, 0x7e, 0xb7, 0xa5, 0x4c, 0xda, 0xd3, 0xc8, 0x2c, 0x1f, 0x71, 0xe8, 0x11, 0xcc, 0x2f,
-	0x9c, 0x06, 0x3f, 0x3b, 0xca, 0xea, 0xb4, 0x8a, 0xb1, 0xbb, 0x91, 0x76, 0x0d, 0x62, 0xf6, 0xff,
-	0xd2, 0xc2, 0xc9, 0xd7, 0xc8, 0xcb, 0x8a, 0x9c, 0x71, 0x5b, 0x5f, 0xaa, 0xc2, 0xc9, 0x7e, 0xc0,
-	0x22, 0xd3, 0xdc, 0xa7, 0xd5, 0xb3, 0x6d, 0x68, 0xfc, 0x8a, 0xb7, 0x57, 0xaf, 0x68, 0x81, 0x4e,
-	0x68, 0xca, 0x9b, 0xfa, 0xd4, 0x13, 0x93, 0xc8, 0x29, 0xc1, 0x1c, 0x47, 0xfa, 0xff, 0x9a, 0xae,
-	0x6b, 0x50, 0xa7, 0x35, 0xbc, 0xfe, 0xa5, 0x00, 0x78, 0x38, 0xfc, 0x90, 0x66, 0x25, 0xad, 0x73,
-	0xf4, 0x1e, 0xe0, 0xf2, 0x45, 0x90, 0xf5, 0x24, 0x0e, 0x62, 0x72, 0x01, 0x8b, 0x87, 0x09, 0xdf,
-	0x56, 0x07, 0xe7, 0x46, 0xa8, 0x2f, 0xce, 0x07, 0xf5, 0xa4, 0x9d, 0x41, 0x7d, 0x15, 0xd1, 0xb9,
-	0xd9, 0xea, 0xf2, 0xf2, 0xde, 0xfc, 0x0d, 0x00, 0x00, 0xff, 0xff, 0x29, 0x79, 0xa4, 0x55, 0x86,
-	0x03, 0x00, 0x00,
 }

@@ -153,6 +153,12 @@ var (
 			Help: "The number of add IP address requests",
 		},
 	)
+	checkIPCnt = prometheus.NewCounter(
+		prometheus.CounterOpts{
+			Name: "awscni_check_ip_req_count",
+			Help: "The number of check IP address requests",
+		},
+	)
 	delIPCnt = prometheus.NewCounterVec(
 		prometheus.CounterOpts{
 			Name: "awscni_del_ip_req_count",
@@ -276,6 +282,7 @@ func prometheusRegister() {
 		prometheus.MustRegister(ipMax)
 		prometheus.MustRegister(reconcileCnt)
 		prometheus.MustRegister(addIPCnt)
+		prometheus.MustRegister(checkIPCnt)
 		prometheus.MustRegister(delIPCnt)
 		prometheusRegistered = true
 	}

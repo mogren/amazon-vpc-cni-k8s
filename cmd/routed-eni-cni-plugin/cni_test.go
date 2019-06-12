@@ -65,12 +65,6 @@ func setup(t *testing.T) (*gomock.Controller,
 		mock_driver.NewMockNetworkAPIs(ctrl)
 }
 
-type rpcConn struct{}
-
-func (*rpcConn) Close() error {
-	return nil
-}
-
 func TestCmdAdd(t *testing.T) {
 	ctrl, mocksTypes, mocksGRPC, mocksRPC, mocksNetwork := setup(t)
 	defer ctrl.Finish()
@@ -127,7 +121,7 @@ func TestCmdAddNetworkErr(t *testing.T) {
 	mocksRPC.EXPECT().NewCNIBackendClient(conn).Return(mockC)
 
 	addNetworkReply := &rpc.AddNetworkReply{Success: false, IPv4Addr: ipAddr, DeviceNumber: devNum}
-	mockC.EXPECT().AddNetwork(gomock.Any(), gomock.Any()).Return(addNetworkReply, errors.New("Error on AddNetworkReply"))
+	mockC.EXPECT().AddNetwork(gomock.Any(), gomock.Any()).Return(addNetworkReply, errors.New("error on AddNetworkReply"))
 
 	err := add(cmdArgs, mocksTypes, mocksGRPC, mocksRPC, mocksNetwork)
 
@@ -171,6 +165,36 @@ func TestCmdAddErrSetupPodNetwork(t *testing.T) {
 	err := add(cmdArgs, mocksTypes, mocksGRPC, mocksRPC, mocksNetwork)
 
 	assert.Error(t, err)
+}
+
+func TestCmdChk(t *testing.T) {
+	ctrl, mocksTypes, mocksGRPC, mocksRPC, _ := setup(t)
+	defer ctrl.Finish()
+
+	netconf := &NetConf{CNIVersion: cniVersion,
+		Name: cniName,
+		Type: cniType}
+	stdinData, _ := json.Marshal(netconf)
+
+	cmdArgs := &skel.CmdArgs{ContainerID: containerID,
+		Netns:     netNS,
+		IfName:    ifName,
+		StdinData: stdinData}
+
+	mocksTypes.EXPECT().LoadArgs(gomock.Any(), gomock.Any()).Return(nil)
+
+	conn, _ := grpc.Dial(ipamdAddress, grpc.WithInsecure())
+
+	mocksGRPC.EXPECT().Dial(gomock.Any(), gomock.Any()).Return(conn, nil)
+	mockC := mock_rpc.NewMockCNIBackendClient(ctrl)
+	mocksRPC.EXPECT().NewCNIBackendClient(conn).Return(mockC)
+
+	checkNetworkReply := &rpc.CheckNetworkReply{Success: true, IPv4Addr: ipAddr, DeviceNumber: devNum}
+	mockC.EXPECT().CheckNetwork(gomock.Any(), gomock.Any()).Return(checkNetworkReply, nil)
+
+	mocksTypes.EXPECT().PrintResult(gomock.Any(), gomock.Any()).Return(nil)
+
+	_ = check(cmdArgs, mocksTypes, mocksGRPC, mocksRPC)
 }
 
 func TestCmdDel(t *testing.T) {

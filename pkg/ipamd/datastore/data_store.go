@@ -340,6 +340,35 @@ func decrementAssignedCount(ds *DataStore, eni *ENIIPPool, addr *AddressInfo) {
 	assignedIPs.Set(float64(ds.assigned))
 }
 
+// CheckPodIPv4Address returns the current status for a pod
+func (ds *DataStore) CheckPodIPv4Address(k8sPod *k8sapi.K8SPodInfo) (string, int, error) {
+	ds.log.Debugf("CheckPodIPv4Address: IP address pool stats: total:%d, assigned %d, pod(Name: %s, Namespace: %s, Container %s)",
+		ds.total, ds.assigned, k8sPod.Name, k8sPod.Namespace, k8sPod.Sandbox)
+
+	podKey := PodKey{
+		name:      k8sPod.Name,
+		namespace: k8sPod.Namespace,
+		sandbox:   k8sPod.Sandbox,
+	}
+	ipAddr, ok := ds.podsIP[podKey]
+	if !ok {
+		ds.log.Warnf("CheckPodIPv4Address: Failed to find pod %s namespace %s Container %s",
+			k8sPod.Name, k8sPod.Namespace, k8sPod.Sandbox)
+		return "", 0, ErrUnknownPod
+	}
+
+	for _, eni := range ds.eniIPPools {
+		ip, ok := eni.IPv4Addresses[ipAddr.IP]
+		if ok && ip.Assigned {
+			return ip.Address, eni.DeviceNumber, nil
+		}
+	}
+
+	ds.log.Warnf("CheckPodIPv4Address: Failed to find pod %s namespace %s container %s using IP %s",
+		k8sPod.Name, k8sPod.Namespace, k8sPod.Sandbox, ipAddr.IP)
+	return "", 0, ErrUnknownPodIP
+}
+
 // GetStats returns total number of IP addresses and number of assigned IP addresses
 func (ds *DataStore) GetStats() (int, int) {
 	return ds.total, ds.assigned

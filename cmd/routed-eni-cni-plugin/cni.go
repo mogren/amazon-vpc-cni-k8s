@@ -248,6 +248,122 @@ func generateHostVethName(prefix, namespace, podname string) string {
 	return fmt.Sprintf("%s%s", prefix, hex.EncodeToString(h.Sum(nil))[:11])
 }
 
+func cmdCheck(args *skel.CmdArgs) error {
+	return check(args, typeswrapper.New(), grpcwrapper.New(), rpcwrapper.New())
+}
+
+/*
+CHECK: Check container's networking is as expected
+
+Parameters:
+	Container ID, as defined for ADD.
+	Network namespace path, as defined for ADD.
+	Network configuration as defined for ADD, which must include a prevResult field containing the Result of the immediately preceding ADD for the container.
+	Extra arguments, as defined for ADD.
+	Name of the interface inside the container, as defined for ADD.
+
+Result:
+	The plugin must return either nothing or an error.
+	The plugin must consult the prevResult to determine the expected interfaces and addresses.
+	The plugin must allow for a later chained plugin to have modified networking resources, e.g. routes.
+	The plugin should return an error if a resource included in the CNI Result type (interface, address or route):
+		was created by the plugin, and
+		is listed in prevResult, and
+		does not exist, or is in an invalid state.
+	The plugin should return an error if other resources not tracked in the Result type such as the following are missing or are in an invalid state:
+		Firewall rules
+		Traffic shaping controls
+		IP reservations
+		External dependencies such as a daemon required for connectivity
+		etc.
+
+The plugin should return an error if it is aware of a condition where the container is generally unreachable.
+The plugin must handle CHECK being called immediately after an ADD, and therefore should allow a reasonable convergence delay for any asynchronous resources.
+The plugin should call CHECK on any delegated (e.g. IPAM) plugins and pass any errors on to its caller.
+
+A runtime must not call CHECK for a container that has not been ADDed, or has been DELeted after its last ADD.
+A runtime must not call CHECK if disableCheck is set to true in the configuration list.
+A runtime must include a prevResult field in the network configuration containing the Result of the immediately preceding ADD for the container. The runtime may wish to use libcni's support for caching Results.
+A runtime may choose to stop executing CHECK for a chain when a plugin returns an error.
+A runtime may execute CHECK from immediately after a successful ADD, up until the container is DELeted from the network.
+A runtime may assume that a failed CHECK means the container is permanently in a misconfigured state.
+*/
+func check(args *skel.CmdArgs, cniTypes typeswrapper.CNITYPES, grpcClient grpcwrapper.GRPC, rpcClient rpcwrapper.RPC) error {
+	_, log, err := LoadNetConf(args.StdinData)
+	log.Infof("Received CNI check request: ContainerID(%s) Netns(%s) IfName(%s) Args(%s) Path(%s) argsStdinData(%s)",
+		args.ContainerID, args.Netns, args.IfName, args.Args, args.Path, args.StdinData)
+
+	conf := NetConf{}
+	if err := json.Unmarshal(args.StdinData, &conf); err != nil {
+		log.Errorf("Error loading config from args: %v", err)
+		return errors.Wrap(err, "add cmd: error loading config from args")
+	}
+
+	k8sArgs := K8sArgs{}
+	if err := cniTypes.LoadArgs(args.Args, &k8sArgs); err != nil {
+		log.Errorf("Failed to load k8s config from arg: %v", err)
+		return errors.Wrap(err, "add cmd: failed to load k8s config from arg")
+	}
+
+	// Set up a connection to the ipamD server.
+	conn, err := grpcClient.Dial(ipamdAddress, grpc.WithInsecure())
+	if err != nil {
+		log.Errorf("Failed to connect to backend server for pod %s namespace %s sandbox %s: %v",
+			string(k8sArgs.K8S_POD_NAME),
+			string(k8sArgs.K8S_POD_NAMESPACE),
+			string(k8sArgs.K8S_POD_INFRA_CONTAINER_ID),
+			err)
+		return errors.Wrap(err, "add cmd: failed to connect to backend server")
+	}
+	defer conn.Close()
+
+	c := rpcClient.NewCNIBackendClient(conn)
+
+	r, err := c.CheckNetwork(context.Background(),
+		&pb.CheckNetworkRequest{
+			Netns:                      args.Netns,
+			K8S_POD_NAME:               string(k8sArgs.K8S_POD_NAME),
+			K8S_POD_NAMESPACE:          string(k8sArgs.K8S_POD_NAMESPACE),
+			K8S_POD_INFRA_CONTAINER_ID: string(k8sArgs.K8S_POD_INFRA_CONTAINER_ID),
+			IfName:                     args.IfName})
+
+	if err != nil {
+		log.Errorf("Error received from CheckNetwork grpc call for pod %s namespace %s sandbox %s: %v",
+			string(k8sArgs.K8S_POD_NAME), string(k8sArgs.K8S_POD_NAMESPACE), string(k8sArgs.K8S_POD_INFRA_CONTAINER_ID), err)
+		return err
+	}
+
+	if !r.Success {
+		log.Errorf("Failed to check pod %s namespace %s sandbox %s",
+			string(k8sArgs.K8S_POD_NAME), string(k8sArgs.K8S_POD_NAMESPACE), string(k8sArgs.K8S_POD_INFRA_CONTAINER_ID))
+		return fmt.Errorf("check cmd: failed to check a pod")
+	}
+
+	log.Infof("Received add network response for pod %s namespace %s container %s: %s, table %d, external-SNAT: %v, vpcCIDR: %v",
+		string(k8sArgs.K8S_POD_NAME), string(k8sArgs.K8S_POD_NAMESPACE), string(k8sArgs.K8S_POD_INFRA_CONTAINER_ID),
+		r.IPv4Addr, r.DeviceNumber, r.UseExternalSNAT, r.VPCcidrs)
+
+	addr := &net.IPNet{
+		IP:   net.ParseIP(r.IPv4Addr),
+		Mask: net.IPv4Mask(255, 255, 255, 255),
+	}
+
+	ips := []*current.IPConfig{
+		{
+			Version: "4",
+			Address: *addr,
+		},
+	}
+
+	result := &current.Result{
+		IPs: ips,
+	}
+	// TODO: Actually check the response against prevResult!
+	_ = cniTypes.PrintResult(result, conf.CNIVersion)
+
+	return nil
+}
+
 func cmdDel(args *skel.CmdArgs) error {
 	return del(args, typeswrapper.New(), grpcwrapper.New(), rpcwrapper.New(), driver.New())
 }
@@ -337,7 +453,7 @@ func main() {
 	log.Infof("CNI Plugin version: %s ...", version)
 	about := fmt.Sprintf("AWS CNI %s", version)
 	exitCode := 0
-	if e := skel.PluginMainWithError(cmdAdd, nil, cmdDel, cniSpecVersion.All, about); e != nil {
+	if e := skel.PluginMainWithError(cmdAdd, cmdCheck, cmdDel, cniSpecVersion.All, about); e != nil {
 		if err := e.Print(); err != nil {
 			log.Errorf("Failed to write error to stdout: %v", err)
 		}

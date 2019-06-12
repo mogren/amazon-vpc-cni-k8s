@@ -70,6 +70,24 @@ func (mr *MockCNIBackendClientMockRecorder) AddNetwork(arg0, arg1 interface{}, a
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "AddNetwork", reflect.TypeOf((*MockCNIBackendClient)(nil).AddNetwork), varargs...)
 }
 
+// CheckNetwork mocks base method
+func (m *MockCNIBackendClient) CheckNetwork(arg0 context.Context, arg1 *rpc.CheckNetworkRequest, arg2 ...grpc.CallOption) (*rpc.CheckNetworkReply, error) {
+	varargs := []interface{}{arg0, arg1}
+	for _, a := range arg2 {
+		varargs = append(varargs, a)
+	}
+	ret := m.ctrl.Call(m, "CheckNetwork", varargs...)
+	ret0, _ := ret[0].(*rpc.CheckNetworkReply)
+	ret1, _ := ret[1].(error)
+	return ret0, ret1
+}
+
+// CheckNetwork indicates an expected call of CheckNetwork
+func (mr *MockCNIBackendClientMockRecorder) CheckNetwork(arg0, arg1 interface{}, arg2 ...interface{}) *gomock.Call {
+	varargs := append([]interface{}{arg0, arg1}, arg2...)
+	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "CheckNetwork", reflect.TypeOf((*MockCNIBackendClient)(nil).CheckNetwork), varargs...)
+}
+
 // DelNetwork mocks base method
 func (m *MockCNIBackendClient) DelNetwork(arg0 context.Context, arg1 *rpc.DelNetworkRequest, arg2 ...grpc.CallOption) (*rpc.DelNetworkReply, error) {
 	m.ctrl.T.Helper()
