@@ -14,6 +14,9 @@ source "$DIR"/lib/integration.sh
 OS=$(go env GOOS)
 ARCH=$(go env GOARCH)
 
+# Unset any cached token
+unset AWS_SESSION_TOKEN
+
 : "${AWS_DEFAULT_REGION:=us-west-2}"
 : "${K8S_VERSION:=1.14.6}"
 : "${PROVISION:=true}"
