@@ -66,6 +66,7 @@ const (
 	maxENIs                 = 128
 	clusterNameEnvVar       = "CLUSTER_NAME"
 	eniNodeTagKey           = "node.k8s.amazonaws.com/instance_id"
+	eniCreatedAtTagKey      = "node.k8s.amazonaws.com/createdAt"
 	eniClusterTagKey        = "cluster.k8s.amazonaws.com/name"
 	additionalEniTagsEnvVar = "ADDITIONAL_ENI_TAGS"
 	reservedTagKeyPrefix    = "k8s.amazonaws.com"
@@ -737,6 +738,13 @@ func (cache *EC2InstanceMetadataCache) attachENI(eniID string) (string, error) {
 // return ENI id, error
 func (cache *EC2InstanceMetadataCache) createENI(useCustomCfg bool, sg []*string, subnet string) (string, error) {
 	eniDescription := eniDescriptionPrefix + cache.instanceID
+	// TODO: Tag on create... Update AWS SDK
+	//tags := []*ec2.Tag{
+	//	{
+	//		Key:   aws.String(eniCreatedAtTagKey),
+	//		Value: aws.String(time.Now().String()),
+	//	},
+	//}
 	input := &ec2.CreateNetworkInterfaceInput{
 		Description: aws.String(eniDescription),
 		Groups:      aws.StringSlice(cache.securityGroups.SortedList()),
@@ -1087,19 +1095,25 @@ func (cache *EC2InstanceMetadataCache) DescribeAllENIs() ([]ENIMetadata, map[str
 		eniMetadata := eniMap[eniID]
 		// Check IPv4 addresses
 		logOutOfSyncState(eniID, eniMetadata.IPv4Addresses, ec2res.PrivateIpAddresses)
-		tags := make(map[string]string, len(ec2res.TagSet))
-		for _, tag := range ec2res.TagSet {
-			if tag.Key == nil || tag.Value == nil {
-				log.Errorf("nil tag on ENI: %v", eniMetadata.ENIID)
-				continue
-			}
-			tags[*tag.Key] = *tag.Value
-		}
+		tags := getTags(ec2res, eniMetadata.ENIID)
 		if len(tags) > 0 {
 			tagMap[eniMetadata.ENIID] = tags
 		}
 	}
 	return verifiedENIs, tagMap, nil
+}
+
+// getTags collects tags from an EC2 DescribeNetworkInterfaces call
+func getTags(ec2res *ec2.NetworkInterface, eniID string) map[string]string {
+	tags := make(map[string]string, len(ec2res.TagSet))
+	for _, tag := range ec2res.TagSet {
+		if tag.Key == nil || tag.Value == nil {
+			log.Errorf("nil tag on ENI: %v", eniID)
+			continue
+		}
+		tags[*tag.Key] = *tag.Value
+	}
+	return tags
 }
 
 var eniErrorMessageRegex = regexp.MustCompile("'([a-zA-Z0-9-]+)'")
@@ -1325,9 +1339,20 @@ func (cache *EC2InstanceMetadataCache) getFilteredListOfNetworkInterfaces() ([]*
 	networkInterfaces := make([]*ec2.NetworkInterface, 0)
 	for _, networkInterface := range result.NetworkInterfaces {
 		// Verify the description starts with "aws-K8S-"
-		if strings.HasPrefix(aws.StringValue(networkInterface.Description), eniDescriptionPrefix) {
-			networkInterfaces = append(networkInterfaces, networkInterface)
+		if !strings.HasPrefix(aws.StringValue(networkInterface.Description), eniDescriptionPrefix) {
+			continue
 		}
+		// Check that it's not a newly created ENI
+		tags := getTags(networkInterface, aws.StringValue(networkInterface.NetworkInterfaceId))
+		if value, ok := tags[eniCreatedAtTagKey]; ok {
+			// TODO Parse the value.
+			// if time.Since(parsedTime) < 5 * time.Minute {continue}
+			log.Debugf("%v", value)
+		} else {
+			// TODO: Set time if we didn't have one. This is to catch the v1.5.x or earlier CNI versions.
+			continue
+		}
+		networkInterfaces = append(networkInterfaces, networkInterface)
 	}
 
 	if len(networkInterfaces) < 1 {
