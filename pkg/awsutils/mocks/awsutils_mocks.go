@@ -177,7 +177,7 @@ func (m *MockAPIs) GetENIIPv4Limit() (int, error) {
 }
 
 // GetENIIPv4Limit indicates an expected call of GetENIIPv4Limit
-func (mr *MockAPIsMockRecorder) GetENIipLimit() *gomock.Call {
+func (mr *MockAPIsMockRecorder) GetENIIPv4Limit() *gomock.Call {
 	mr.mock.ctrl.T.Helper()
 	return mr.mock.ctrl.RecordCallWithMethodType(mr.mock, "GetENIIPv4Limit", reflect.TypeOf((*MockAPIs)(nil).GetENIIPv4Limit))
 }
