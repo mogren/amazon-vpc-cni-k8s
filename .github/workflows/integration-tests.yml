@@ -6,7 +6,7 @@ on:
     types: [ok-to-test-command]
 
 jobs:
-  # Branch-based pull request from this repo
+  # Branch-based pull request
   integration-trusted:
     runs-on: self-hosted
     if: github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.full_name == github.repository
@@ -70,9 +70,9 @@ jobs:
         run: |
           ./scripts/run-integration-tests.sh
 
-      # Update check run called "integration-fork" to be completed
+      # Update check run called "integration-fork"
       - uses: actions/github-script@v1
-        id: update-check-run-completed
+        id: update-check-run
         env:
           number: ${{ github.event.client_payload.pull_request.number }}
           job: ${{ github.job }}
