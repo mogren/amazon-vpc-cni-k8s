@@ -12,7 +12,7 @@ jobs:
       - name: Slash Command Dispatch
         uses: peter-evans/slash-command-dispatch@v1
         with:
-          token: ${{ secrets.ok-to-test-token }} # GitHub personal access token with public repo access
+          token: ${{ secrets.ok_to_test_token }} # GitHub personal access token with public repo access
           reaction-token: ${{ secrets.GITHUB_TOKEN }}
           issue-type: pull-request
           commands: ok-to-test
