@@ -1,6 +1,8 @@
-name: Run unit tests
+name: Go
 
 on:
+  push:
+    branches: [ master ]
   pull_request_target:
     branches: [ master ]
 
@@ -28,7 +30,7 @@ jobs:
     - name: Run code checks
       run: |
         make check-format
-        # make lint LINT_FLAGS=
+        make lint LINT_FLAGS=
         make vet
 
     - name: Build
