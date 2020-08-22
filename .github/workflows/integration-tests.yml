@@ -11,18 +11,10 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.full_name == github.repository
     steps:
-<<<<<<< HEAD
       - name: Branch based PR checkout
         uses: actions/checkout@v2
 
       # <insert integration tests needing secrets>
-=======
-
-      - name: Branch based PR checkout
-        uses: actions/checkout@v2
-
-    # <insert integration tests needing secrets>
->>>>>>> 32a95768... Add ok-to-test command
       - run: |
           echo "Integration tests from internal branch..."
           echo "${{ github.event_name }}"
@@ -35,7 +27,6 @@ jobs:
   integration-fork:
     runs-on: ubuntu-latest
     if:
-<<<<<<< HEAD
       github.event_name == 'repository_dispatch' &&
       github.event.client_payload.slash_command.sha != '' &&
       contains(github.event.client_payload.pull_request.head.sha, github.event.client_payload.slash_command.sha)
@@ -46,12 +37,6 @@ jobs:
           echo "PR head SHA: ${{ github.event.client_payload.pull_request.head.sha }}"
           echo "/ok-to-test SHA: ${{ github.event.client_payload.slash_command.sha }}"
 
-=======
-      github.event_name == 'repository_dispatch' #&&
-      github.event.client_payload.slash_command.sha != '' &&
-      contains(github.event.client_payload.pull_request_target.head.sha, github.event.client_payload.slash_command.sha)
-    steps:
->>>>>>> 32a95768... Add ok-to-test command
       # Check out merge commit
       - name: Fork based /ok-to-test checkout
         uses: actions/checkout@v2

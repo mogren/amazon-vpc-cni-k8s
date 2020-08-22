@@ -9,15 +9,6 @@ jobs:
   ok-to-test:
     runs-on: ubuntu-latest
     steps:
-<<<<<<< HEAD
-=======
-      - name: Log
-        env:
-          PAYLOAD_CONTEXT: ${{ toJson(github.event.client_payload) }}
-        run: |
-          echo "$PAYLOAD_CONTEXT"
-          echo "${{ github.event.client_payload.issue_comment.head.sha }}"
->>>>>>> 32a95768... Add ok-to-test command
       - name: Slash Command Dispatch
         uses: peter-evans/slash-command-dispatch@v1
         with:
