@@ -36,20 +36,22 @@ jobs:
       #contains(github.event.client_payload.pull_request_target.head.sha, github.event.client_payload.slash_command.sha)
     steps:
 
+      - run: |
+          echo "${{ github.event.client_payload.slash_command.sha }}"
+          echo "${{ github.event.client_payload.pull_request_target.head.sha }}"
+          echo "${{ github.event.client_payload.slash_command.sha }}"
+          echo "${{ github.event.client_payload.pull_request_target.number }}"
+
       # Check out merge commit
       - name: Fork based /ok-to-test checkout
         uses: actions/checkout@v2
         with:
-          ref: 'refs/pull/${{ github.event.client_payload.pull_request_target.number }}/merge'
+          ref: 'refs/pull/${{ github.event.client_payload.pull_request.number }}/merge'
 
       # <insert integration tests needing secrets>
 
       - run: |
           echo "Run integration tests after /ok-to-test"
-          echo "${{ github.event.client_payload.slash_command.sha }}"
-          echo "${{ github.event.client_payload.pull_request_target.head.sha }}"
-          echo "${{ github.event.client_payload.slash_command.sha }}"
-          echo "${{ github.event.client_payload.pull_request_target.number }}"
 
       # Update check run called "integration-fork"
       - uses: actions/github-script@v1
