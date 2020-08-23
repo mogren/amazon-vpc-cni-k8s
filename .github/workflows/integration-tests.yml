@@ -19,6 +19,11 @@ jobs:
       - run: |
           echo "Integration tests from internal branch..."
           echo "${{ github.event_name }}"
+          echo "${{ github.event.pull_request.head }}"
+          echo "${{ github.event.pull_request.head.repo }}"
+          echo "${{ github.event.pull_request.head.repo.full_name }}"
+          echo "${{ github.event.pull_request_target.head }}"
+          echo "${{ github.event.pull_request_target.head.repo }}"
           echo "${{ github.event.pull_request_target.head.repo.full_name }}"
           echo "${{ github.repository }}"
 
