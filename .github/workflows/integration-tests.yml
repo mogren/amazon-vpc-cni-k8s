@@ -36,11 +36,10 @@ jobs:
       #contains(github.event.client_payload.pull_request_target.head.sha, github.event.client_payload.slash_command.sha)
     steps:
 
-      - run: |
-          echo "${{ github.event.client_payload.slash_command.sha }}"
-          echo "${{ github.event.client_payload.pull_request_target.head.sha }}"
-          echo "${{ github.event.client_payload.slash_command.sha }}"
-          echo "${{ github.event.client_payload.pull_request_target.number }}"
+      - name: Dump the client payload context
+        env:
+          PAYLOAD_CONTEXT: ${{ toJson(github.event.client_payload) }}
+        run: echo "$PAYLOAD_CONTEXT"
 
       # Check out merge commit
       - name: Fork based /ok-to-test checkout
@@ -57,7 +56,7 @@ jobs:
       - uses: actions/github-script@v1
         id: update-check-run
         env:
-          number: ${{ github.event.client_payload.pull_request_target.number }}
+          number: ${{ github.event.client_payload.pull_request.number }}
           job: ${{ github.job }}
           # Conveniently, job.status maps to https://developer.github.com/v3/checks/runs/#update-a-check-run
           conclusion: ${{ job.status }}
