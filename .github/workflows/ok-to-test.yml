@@ -11,8 +11,13 @@ jobs:
     steps:
       - name: Slash Command Dispatch
         uses: peter-evans/slash-command-dispatch@v1
+        env:
+          PAYLOAD_CONTEXT: ${{ toJson(github.event.client_payload) }}
+        run: |
+          echo "$PAYLOAD_CONTEXT"
+          echo "${{ github.event.client_payload.issue_comment.head.sha }}"
         with:
-          token: ${{ secrets.OK_TO_TEST_TOKEN }} # GitHub personal access token with public repo access
+          token: ${{ secrets.OK_TO_TEST_TOKEN }} # GitHub access token with public repo access only
           reaction-token: ${{ secrets.GITHUB_TOKEN }}
           issue-type: pull-request
           commands: ok-to-test
