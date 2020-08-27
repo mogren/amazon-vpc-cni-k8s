@@ -1,7 +1,7 @@
 #!/usr/bin/env bash
 
 function down-test-cluster() {
-    if [[ -n "${CIRCLE_JOB:-}" ]]; then
+    if [[ -n "${CIRCLE_JOB:-}" || -n "${DISABLE_PROMPT:-}" ]]; then
         $TESTER_PATH eks delete cluster --enable-prompt=false --path $CLUSTER_CONFIG || (echo "failed!" && exit 1)
     else
         echo -n "Deleting cluster $CLUSTER_NAME (this may take ~10 mins) ... "
@@ -41,7 +41,7 @@ function up-test-cluster() {
         AWS_K8S_TESTER_EKS_ADD_ON_ALB_2048_ENABLE=true \
         $TESTER_PATH eks create config --path $CLUSTER_CONFIG 1>&2
 
-    if [[ -n "${CIRCLE_JOB:-}" ]]; then
+    if [[ -n "${CIRCLE_JOB:-}" || -n "${DISABLE_PROMPT:-}" ]]; then
         $TESTER_PATH eks create cluster --enable-prompt=false --path $CLUSTER_CONFIG || (echo "failed!" && exit 1)
     else
         echo -n "Creating cluster $CLUSTER_NAME (this may take ~20 mins. details: tail -f $CLUSTER_MANAGE_LOG_PATH)... "
