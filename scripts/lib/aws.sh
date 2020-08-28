@@ -6,6 +6,7 @@ check_aws_credentials() {
 }
 
 ensure_ecr_repo() {
+    echo "Ensuring that $2 exists for account $1"
     local __registry_account_id="$1"
     local __repo_name="$2"
     if ! `aws ecr describe-repositories --registry-id "$__registry_account_id" --repository-names "$__repo_name" >/dev/null 2>&1`; then

@@ -1,6 +1,8 @@
 name: Run e2e-tests every 2 hours
 
 on:
+  repository_dispatch:
+    types: [ ok-to-test-command ]
   schedule:
     - cron: '0 */2 * * *'  # every 2h
 
@@ -23,9 +25,18 @@ jobs:
           go get -u golang.org/x/lint/golint
           go get -u golang.org/x/tools/cmd/goimports
 
+      - name: Set up AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: us-west-2
+          role-to-assume: vpc-cni-tester
+
       - name: Run e2e tests
         env:
-          DISABLE_PROMPT: true
+          DISABLE_PROMPT: "true"
+          RUN_CONFORMANCE: "true"
+          TESTER_DIR: "."
+          AWS_DEFAULT_REGION: "us-west-2"
 
         run: |
           ./scripts/run-integration-tests.sh

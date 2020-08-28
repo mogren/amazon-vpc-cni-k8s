@@ -11,17 +11,35 @@ jobs:
     runs-on: ubuntu-latest
     if: github.event_name == 'pull_request_target' && github.event.pull_request.head.repo.full_name == github.repository
     steps:
-      - name: Branch based PR checkout
+      - name: Set up Go 1.14
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.14
+        id: go
+
+      - name: Check out code into the Go module directory
         uses: actions/checkout@v2
 
-      # <insert integration tests needing secrets>
-      - run: |
-          echo "Integration tests from internal branch..."
-          echo "${{ github.event_name }}"
-          echo "${{ github.event.pull_request.head.commit_id }}"
-          echo "${{ github.event.pull_request.head.repo }}"
-          echo "${{ github.event.pull_request.head.repo.full_name }}"
-          echo "${{ github.repository }}"
+      - name: Get dependencies
+        run: |
+          go get -u golang.org/x/lint/golint
+          go get -u golang.org/x/tools/cmd/goimports
+          
+      - name: Set up AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: us-west-2
+          role-to-assume: vpc-cni-tester
+
+      - name: Run e2e tests from trusted branch
+        env:
+          DISABLE_PROMPT: "true"
+          RUN_CONFORMANCE: "true"
+          TESTER_DIR: "."
+          AWS_DEFAULT_REGION: "us-west-2"
+
+        run: |
+          ./scripts/run-integration-tests.sh
 
   # Repo owner has commented /ok-to-test on a (fork-based) pull request
   integration-fork:
