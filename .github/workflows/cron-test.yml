@@ -25,7 +25,8 @@ jobs:
 
       - name: Run e2e tests
         env:
-          DISABLE_PROMPT: true
+          DISABLE_PROMPT: "true"
+          RUN_CONFORMANCE: "true"
 
         run: |
           ./scripts/run-integration-tests.sh
