@@ -258,9 +258,12 @@ if [[ "$RUN_PERFORMANCE_TESTS" == true ]]; then
     echo ""
     START=$SECONDS
     run_performance_test_130_pods
+    ABORT_5000_TEST=false
     scale_nodes_for_5000_pod_test
-    run_performance_test_730_pods
-    run_performance_test_5000_pods
+    if [[ "$ABORT_5000_TEST" == false ]]; then
+        run_performance_test_730_pods
+        run_performance_test_5000_pods
+    fi
     PERFORMANCE_DURATION=$((SECONDS - START))
 fi
 

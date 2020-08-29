@@ -209,11 +209,19 @@ function run_performance_test_730_pods() {
 }
 
 function scale_nodes_for_5000_pod_test() {
+    echo "Scaling nodes for 5000 pod test"
     AUTO_SCALE_GROUP_NAME=$(aws autoscaling describe-auto-scaling-groups | jq --raw-output '.AutoScalingGroups[0].AutoScalingGroupName')
-    echo "$AUTO_SCALE_GROUP_NAME"
+    echo "ASG name: $AUTO_SCALE_GROUP_NAME"
+
+    if [[ ${#AUTO_SCALE_GROUP_NAME} -gt 4 ]]; then
     aws autoscaling update-auto-scaling-group \
         --auto-scaling-group-name "$AUTO_SCALE_GROUP_NAME" \
         --desired-capacity 99
+    else
+        echo "Unable to find AutoScalingGroupName, aborting performance test. Full ASG output:"
+        aws autoscaling describe-auto-scaling-groups
+        ABORT_5000_TEST=true
+    fi
 }
 
 function run_performance_test_5000_pods() {
