@@ -27,7 +27,8 @@ jobs:
         env:
           DISABLE_PROMPT: "true"
           RUN_CONFORMANCE: "true"
-          TESTER_DIR: "./"
+          TESTER_DIR: "."
+          AWS_DEFAULT_REGION: "us-west-2"
 
         run: |
           ./scripts/run-integration-tests.sh
