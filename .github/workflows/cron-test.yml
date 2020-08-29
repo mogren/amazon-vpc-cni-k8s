@@ -27,6 +27,7 @@ jobs:
         env:
           DISABLE_PROMPT: "true"
           RUN_CONFORMANCE: "true"
+          TESTER_DIR: "./"
 
         run: |
           ./scripts/run-integration-tests.sh
