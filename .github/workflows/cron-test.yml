@@ -41,6 +41,7 @@ jobs:
           DISABLE_PROMPT: "true"
           RUN_CONFORMANCE: "true"
           TESTER_DIR: "."
+          TEST_BASE_DIR: "./cni-test"
           AWS_DEFAULT_REGION: "us-west-2"
 
         run: |

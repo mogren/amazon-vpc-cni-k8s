@@ -51,7 +51,8 @@ on_error() {
 
 # test specific config, results location
 : "${TEST_ID:=$RANDOM}"
-TEST_DIR=/tmp/cni-test/$(date "+%Y%M%d%H%M%S")-$TEST_ID
+: "${TEST_BASE_DIR:=/tmp/cni-test}"
+TEST_DIR=${TEST_BASE_DIR}/$(date "+%Y%M%d%H%M%S")-$TEST_ID
 REPORT_DIR=${TEST_DIR}/report
 TEST_CONFIG_DIR="$TEST_DIR/config"
 
@@ -59,7 +60,7 @@ TEST_CONFIG_DIR="$TEST_DIR/config"
 # Pass in CLUSTER_ID to reuse a test cluster
 : "${CLUSTER_ID:=$RANDOM}"
 CLUSTER_NAME=cni-test-$CLUSTER_ID
-TEST_CLUSTER_DIR=/tmp/cni-test/cluster-$CLUSTER_NAME
+TEST_CLUSTER_DIR=${TEST_BASE_DIR}/cluster-$CLUSTER_NAME
 CLUSTER_MANAGE_LOG_PATH=$TEST_CLUSTER_DIR/cluster-manage.log
 : "${CLUSTER_CONFIG:=${TEST_CLUSTER_DIR}/${CLUSTER_NAME}.yaml}"
 : "${KUBECONFIG_PATH:=${TEST_CLUSTER_DIR}/kubeconfig}"
