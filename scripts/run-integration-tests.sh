@@ -16,7 +16,7 @@ OS=$(go env GOOS)
 ARCH=$(go env GOARCH)
 
 : "${AWS_DEFAULT_REGION:=us-west-2}"
-: "${K8S_VERSION:=1.14.6}"
+: "${K8S_VERSION:=1.16.10}"
 : "${PROVISION:=true}"
 : "${DEPROVISION:=true}"
 : "${BUILD:=true}"
@@ -106,6 +106,7 @@ ensure_aws_k8s_tester
 
 # `aws ec2 get-login` returns a docker login string, which we eval here to login to the ECR registry
 # shellcheck disable=SC2046
+echo "Logging in to docker repo"
 eval $(aws ecr get-login --region $AWS_DEFAULT_REGION --no-include-email) >/dev/null 2>&1
 ensure_ecr_repo "$AWS_ACCOUNT_ID" "$AWS_ECR_REPO_NAME"
 ensure_ecr_repo "$AWS_ACCOUNT_ID" "$AWS_INIT_ECR_REPO_NAME"
@@ -241,7 +242,7 @@ if [[ $TEST_PASS -eq 0 && "$RUN_CONFORMANCE" == true ]]; then
   START=$SECONDS
 
   go install github.com/onsi/ginkgo/ginkgo
-  wget -qO- https://dl.k8s.io/v$K8S_VERSION/kubernetes-test.tar.gz | tar -zxvf - --strip-components=4 -C /tmp  kubernetes/platforms/linux/amd64/e2e.test
+  wget -O- https://dl.k8s.io/v$K8S_VERSION/kubernetes-test.tar.gz | tar -zxvf - --strip-components=4 -C /tmp  kubernetes/platforms/linux/amd64/e2e.test
   $GOPATH/bin/ginkgo -p --focus="Conformance"  --failFast --flakeAttempts 2 \
    --skip="(should support remote command execution over websockets)|(should support retrieving logs from the container over websockets)|\[Slow\]|\[Serial\]" /tmp/e2e.test -- --kubeconfig=$KUBECONFIG
 

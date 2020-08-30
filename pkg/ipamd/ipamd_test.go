@@ -236,7 +236,7 @@ func testIncreaseIPPool(t *testing.T, useENIConfig bool) {
 		m.awsutils.EXPECT().AllocENI(false, nil, "").Return(eni2, nil)
 	}
 
-	m.awsutils.EXPECT().GetAttachedENIs().Return([]awsutils.ENIMetadata{
+	eniMetadata := []awsutils.ENIMetadata{
 		{
 			ENIID:          primaryENIid,
 			MAC:            primaryMAC,
@@ -265,9 +265,10 @@ func testIncreaseIPPool(t *testing.T, useENIConfig bool) {
 				},
 			},
 		},
-	}, nil)
+	}
 
 	m.awsutils.EXPECT().GetPrimaryENI().Return(primaryENIid)
+	m.awsutils.EXPECT().WaitForENIAndIPsAttached(secENIid, 14).Return(eniMetadata[1], nil)
 	m.network.EXPECT().SetupENINetwork(gomock.Any(), secMAC, secDevice, secSubnet)
 
 	m.awsutils.EXPECT().AllocIPAddresses(eni2, 14)
@@ -288,13 +289,13 @@ func TestTryAddIPToENI(t *testing.T) {
 	testAddr11 := ipaddr11
 	testAddr12 := ipaddr12
 
-	warmIpTarget := 3
+	warmIPTarget := 3
 	mockContext := &IPAMContext{
 		awsClient:     m.awsutils,
 		maxIPsPerENI:  14,
 		maxENI:        4,
 		warmENITarget: 1,
-		warmIPTarget:  warmIpTarget,
+		warmIPTarget:  warmIPTarget,
 		networkClient: m.network,
 		eniConfig:     m.eniconfig,
 		primaryIP:     make(map[string]string),
@@ -304,8 +305,8 @@ func TestTryAddIPToENI(t *testing.T) {
 	mockContext.dataStore = testDatastore()
 
 	m.awsutils.EXPECT().AllocENI(false, nil, "").Return(secENIid, nil)
-	m.awsutils.EXPECT().AllocIPAddresses(secENIid, warmIpTarget)
-	m.awsutils.EXPECT().GetAttachedENIs().Return([]awsutils.ENIMetadata{
+	m.awsutils.EXPECT().AllocIPAddresses(secENIid, warmIPTarget)
+	eniMetadata := []awsutils.ENIMetadata{
 		{
 			ENIID:          primaryENIid,
 			MAC:            primaryMAC,
@@ -334,7 +335,8 @@ func TestTryAddIPToENI(t *testing.T) {
 				},
 			},
 		},
-	}, nil)
+	}
+	m.awsutils.EXPECT().WaitForENIAndIPsAttached(secENIid, 3).Return(eniMetadata[1], nil)
 	m.awsutils.EXPECT().GetPrimaryENI().Return(primaryENIid)
 	m.network.EXPECT().SetupENINetwork(gomock.Any(), secMAC, secDevice, secSubnet)
 	m.awsutils.EXPECT().GetPrimaryENI().Return(primaryENIid)

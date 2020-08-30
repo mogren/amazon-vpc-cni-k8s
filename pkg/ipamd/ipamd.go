@@ -682,12 +682,13 @@ func (c *IPAMContext) tryAllocateENI() error {
 		ipamdErrInc("increaseIPPoolAllocIPAddressesFailed")
 	}
 
-	eniMetadata, err := c.waitENIAttached(eni)
+	eniMetadata, err := c.awsClient.WaitForENIAndIPsAttached(eni, ipsToAllocate)
 	if err != nil {
 		ipamdErrInc("increaseIPPoolwaitENIAttachedFailed")
 		log.Errorf("Failed to increase pool size: Unable to discover attached ENI from metadata service %v", err)
 		return err
 	}
+
 	err = c.setupENI(eni, eniMetadata, c.dataStore.GetTrunkENI())
 	if err != nil {
 		ipamdErrInc("increaseIPPoolsetupENIFailed")
@@ -774,32 +775,6 @@ func (c *IPAMContext) addENIaddressesToDataStore(ec2Addrs []*ec2.NetworkInterfac
 	total, assigned := c.dataStore.GetStats()
 	log.Debugf("IP Address Pool stats: total: %d, assigned: %d", total, assigned)
 	return primaryIP
-}
-
-func (c *IPAMContext) waitENIAttached(eni string) (awsutils.ENIMetadata, error) {
-	// Wait until the ENI shows up in the instance metadata service
-	retry := 0
-	for {
-		enis, err := c.awsClient.GetAttachedENIs()
-		if err != nil {
-			log.Warnf("Failed to increase pool, error trying to discover attached ENIs: %v ", err)
-		} else {
-			// Verify that the ENI we are waiting for is in the returned list
-			for _, returnedENI := range enis {
-				if eni == returnedENI.ENIID {
-					return returnedENI, nil
-				}
-			}
-			log.Debugf("Not able to find the right ENI yet (attempt %d/%d)", retry, maxRetryCheckENI)
-		}
-		retry++
-		if retry > maxRetryCheckENI {
-			ipamdErrInc("waitENIAttachedMaxRetryExceeded")
-			return awsutils.ENIMetadata{}, errors.New("waitENIAttached: giving up trying to retrieve ENIs from metadata service")
-		}
-		log.Debugf("Not able to discover attached ENIs yet (attempt %d/%d)", retry, maxRetryCheckENI)
-		time.Sleep(eniAttachTime)
-	}
 }
 
 // getMaxENI returns the maximum number of ENIs to attach to this instance. This is calculated as the lesser of
@@ -1243,9 +1218,10 @@ func (c *IPAMContext) getTrunkLinkIndex() (int, error) {
 
 		}
 	}
-	return -1, errors.New("No trunk!")
+	return -1, errors.New("no trunk!")
 }
 
+// SetNodeLabel sets or deletes a node label
 func (c *IPAMContext) SetNodeLabel(key, value string) error {
 	// Find my node
 	node, err := c.k8sClient.CoreV1().Nodes().Get(c.myNodeName, metav1.GetOptions{})
@@ -1279,6 +1255,7 @@ func (c *IPAMContext) SetNodeLabel(key, value string) error {
 	return nil
 }
 
+// GetPod returns the pod matching the name and namespace
 func (c *IPAMContext) GetPod(podName, namespace string) (*v1.Pod, error) {
 	return c.k8sClient.CoreV1().Pods(namespace).Get(podName, metav1.GetOptions{})
 }

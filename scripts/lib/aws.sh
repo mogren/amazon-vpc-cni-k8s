@@ -6,6 +6,7 @@ check_aws_credentials() {
 }
 
 ensure_ecr_repo() {
+    echo "Ensuring that $2 exists for account $1"
     local __registry_account_id="$1"
     local __repo_name="$2"
     if ! `aws ecr describe-repositories --registry-id "$__registry_account_id" --repository-names "$__repo_name" >/dev/null 2>&1`; then
@@ -15,7 +16,7 @@ ensure_ecr_repo() {
 }
 
 ensure_aws_k8s_tester() {
-    TESTER_RELEASE=${TESTER_RELEASE:-v1.4.0}
+    TESTER_RELEASE=${TESTER_RELEASE:-v1.4.8}
     TESTER_DOWNLOAD_URL=https://github.com/aws/aws-k8s-tester/releases/download/$TESTER_RELEASE/aws-k8s-tester-$TESTER_RELEASE-$OS-$ARCH
 
     # Download aws-k8s-tester if not yet
