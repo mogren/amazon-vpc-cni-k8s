@@ -25,11 +25,12 @@ jobs:
           go get -u golang.org/x/lint/golint
           go get -u golang.org/x/tools/cmd/goimports
           
-      - name: Set up AWS credentials
+      - name: Set up AWS credentials for 3h
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-region: us-west-2
           role-to-assume: vpc-cni-tester
+          role-duration-seconds: 10800
 
       - name: Run e2e tests from trusted branch
         env:
