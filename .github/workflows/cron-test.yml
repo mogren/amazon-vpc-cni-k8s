@@ -28,15 +28,11 @@ jobs:
       - name: Check sts
         run: |
           aws sts get-caller-identity
-          TOKEN=`curl -X PUT "http://169.254.169.254/latest/api/token" -H "X-aws-ec2-metadata-token-ttl-seconds: 21600"` \
-          && curl -H "X-aws-ec2-metadata-token: $TOKEN" -v http://169.254.169.254/latest/meta-data/iam/security-credentials/vpc-cni-tester
 
       - name: Set up AWS credentials for 3h
         uses: aws-actions/configure-aws-credentials@v1
         with:
           aws-region: us-west-2
-          role-to-assume: vpc-cni-tester
-          role-duration-seconds: 10800
 
       - name: Run e2e tests
         env:
