@@ -32,8 +32,13 @@ jobs:
           aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
           aws-region: us-west-2
 
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
       - name: Run e2e tests from trusted branch
         env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
           DISABLE_PROMPT: "true"
           RUN_CONFORMANCE: "true"
           TESTER_DIR: "."
@@ -41,6 +46,7 @@ jobs:
           AWS_DEFAULT_REGION: "us-west-2"
 
         run: |
+          echo $ECR_REGISTRY
           ./scripts/run-integration-tests.sh
 
   # Repo owner has commented /ok-to-test on a (fork-based) pull request
@@ -63,9 +69,35 @@ jobs:
         with:
           ref: 'refs/pull/${{ github.event.client_payload.pull_request.number }}/merge'
 
-      # <insert integration tests needing secrets>
-      - run: |
-          echo "Run integration tests after /ok-to-test"
+      # TODO: Break out into separate job somehow
+      - name: Get dependencies
+        run: |
+          go get -u golang.org/x/lint/golint
+          go get -u golang.org/x/tools/cmd/goimports
+
+      - name: Set up AWS credentials
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: us-west-2
+
+      - name: Login to Amazon ECR
+        id: login-ecr
+        uses: aws-actions/amazon-ecr-login@v1
+
+      - name: Run e2e tests from trusted branch
+        env:
+          ECR_REGISTRY: ${{ steps.login-ecr.outputs.registry }}
+          DISABLE_PROMPT: "true"
+          RUN_CONFORMANCE: "true"
+          TESTER_DIR: "."
+          TEST_BASE_DIR: "./cni-test"
+          AWS_DEFAULT_REGION: "us-west-2"
+
+        run: |
+          echo $ECR_REGISTRY
+          ./scripts/run-integration-tests.sh
 
       # Update check run called "integration-fork"
       - uses: actions/github-script@v1
