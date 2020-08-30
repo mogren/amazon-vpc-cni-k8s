@@ -25,6 +25,12 @@ jobs:
           go get -u golang.org/x/lint/golint
           go get -u golang.org/x/tools/cmd/goimports
 
+      - name: A
+        uses: aws-actions/configure-aws-credentials@v1
+        with:
+          aws-region: us-west-2
+          role-to-assume: vpc-cni-tester
+
       - name: Run e2e tests
         env:
           DISABLE_PROMPT: "true"
