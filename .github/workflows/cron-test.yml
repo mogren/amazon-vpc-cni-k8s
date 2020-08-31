@@ -1,8 +1,6 @@
 name: Run e2e-tests every 2 hours
 
 on:
-  repository_dispatch:
-    types: [ ok-to-test-command ]
   schedule:
     - cron: '0 */2 * * *'  # every 2h
 
