@@ -47,5 +47,5 @@ jobs:
         env:
           AWS_DEFAULT_REGION: us-west-2
         run: |
-          AWS_ACCOUNT=$(aws sts get-caller-identity --query "Account")
+          AWS_ACCOUNT=$(aws sts get-caller-identity --query "Account" | sed s/\"//g)
           aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT.dkr.ecr.us-west-2.amazonaws.com
