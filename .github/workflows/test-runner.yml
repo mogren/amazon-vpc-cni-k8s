@@ -38,6 +38,8 @@ jobs:
           aws s3 ls
 
       - name: Check docker login
+        env:
+          AWS_DEFAULT_REGION: us-west-2
         run: |
           eval $(aws ecr get-login --region $AWS_DEFAULT_REGION --no-include-email)
 
