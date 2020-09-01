@@ -2,7 +2,8 @@ name: Run e2e-tests every 2 hours
 
 on:
   schedule:
-    - cron: '0 */2 * * *'  # every 2h
+    #- cron: '0 */2 * * *'  # every 2h
+    - cron: '0 6 * * 6'  # every week
 
 jobs:
   # Run e2e tests on self-hosted runner
