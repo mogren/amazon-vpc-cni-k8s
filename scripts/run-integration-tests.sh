@@ -245,6 +245,8 @@ if [[ $TEST_PASS -eq 0 && "$RUN_CONFORMANCE" == true ]]; then
   START=$SECONDS
 
   GOPATH=$(go env GOPATH)
+  export PATH=${PATH}:$KUBECTL_PATH
+  echo $PATH
 
   go install github.com/onsi/ginkgo/ginkgo
   wget -qO- https://dl.k8s.io/v$K8S_VERSION/kubernetes-test.tar.gz | tar -zxvf - --strip-components=4 -C ${TEST_BASE_DIR}  kubernetes/platforms/linux/amd64/e2e.test

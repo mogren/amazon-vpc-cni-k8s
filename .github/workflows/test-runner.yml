@@ -64,5 +64,4 @@ jobs:
           go get -u golang.org/x/lint/golint
           go get -u golang.org/x/tools/cmd/goimports
 
-      - name: Check out code into the Go module directory
-        uses: actions/checkout@v2
+      
