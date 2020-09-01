@@ -47,5 +47,22 @@ jobs:
         env:
           AWS_DEFAULT_REGION: us-west-2
         run: |
-          AWS_ACCOUNT=$(aws sts get-caller-identity --query "Account" | sed s/\"//g)
+          AWS_ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
           aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT.dkr.ecr.us-west-2.amazonaws.com
+
+      - name: Set up Go 1.14
+        uses: actions/setup-go@v2
+        with:
+          go-version: ^1.14
+        id: go
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
+
+      - name: Get dependencies
+        run: |
+          go get -u golang.org/x/lint/golint
+          go get -u golang.org/x/tools/cmd/goimports
+
+      - name: Check out code into the Go module directory
+        uses: actions/checkout@v2
