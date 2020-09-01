@@ -18,8 +18,8 @@ on:
 
 # A workflow run is made up of one or more jobs that can run sequentially or in parallel
 jobs:
-  # This workflow contains a single job called "greet"
-  greet:
+  # Test stuff
+  test-permissions:
     # The type of runner that the job will run on
     runs-on: self-hosted
 
@@ -43,3 +43,9 @@ jobs:
         run: |
           eval $(aws ecr get-login --region $AWS_DEFAULT_REGION --no-include-email)
 
+      - name: Better docker login
+        env:
+          AWS_DEFAULT_REGION: us-west-2
+        run: |
+          AWS_ACCOUNT=$(aws sts get-caller-identity --query "Account")
+          aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT.dkr.ecr.us-west-2.amazonaws.com
