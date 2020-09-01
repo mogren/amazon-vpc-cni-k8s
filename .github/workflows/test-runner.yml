@@ -29,27 +29,6 @@ jobs:
       - name: Send greeting
         run: echo "Hello ${{ github.event.inputs.name }}"
 
-      - name: Check sts
-        run: |
-          aws sts get-caller-identity
-
-      - name: Check s3
-        run: |
-          aws s3 ls
-
-      - name: Check docker login
-        env:
-          AWS_DEFAULT_REGION: us-west-2
-        run: |
-          eval $(aws ecr get-login --region $AWS_DEFAULT_REGION --no-include-email)
-
-      - name: Better docker login
-        env:
-          AWS_DEFAULT_REGION: us-west-2
-        run: |
-          AWS_ACCOUNT=$(aws sts get-caller-identity --query Account --output text)
-          aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin $AWS_ACCOUNT.dkr.ecr.us-west-2.amazonaws.com
-
       - name: Set up Go 1.14
         uses: actions/setup-go@v2
         with:
@@ -64,4 +43,11 @@ jobs:
           go get -u golang.org/x/lint/golint
           go get -u golang.org/x/tools/cmd/goimports
 
-      
+      - name: Run e2e tests
+        env:
+          DISABLE_PROMPT: "true"
+          RUN_CONFORMANCE: "true"
+          AWS_DEFAULT_REGION: "us-west-2"
+        run: |
+          ./scripts/run-integration-tests.sh
+

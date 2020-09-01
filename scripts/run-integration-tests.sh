@@ -105,12 +105,8 @@ ensure_aws_k8s_tester
 : "${S3_BUCKET_CREATE:=true}"
 : "${S3_BUCKET_NAME:=""}"
 
-# `aws ec2 get-login` returns a docker login string, which we eval here to login to the ECR registry
-# shellcheck disable=SC2046
-if [[ -n "${CIRCLE_JOB:-}" ]]; then
-    echo "Logging in to docker repo for CircleCI"
-    eval $(aws ecr get-login --region $AWS_DEFAULT_REGION --no-include-email) >/dev/null 2>&1
-fi
+echo "Logging in to docker repo"
+aws ecr get-login-password --region $AWS_DEFAULT_REGION | docker login --username AWS --password-stdin ${AWS_ECR_REGISTRY}
 ensure_ecr_repo "$AWS_ACCOUNT_ID" "$AWS_ECR_REPO_NAME"
 ensure_ecr_repo "$AWS_ACCOUNT_ID" "$AWS_INIT_ECR_REPO_NAME"
 
