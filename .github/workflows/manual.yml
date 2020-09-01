@@ -37,7 +37,7 @@ jobs:
         run: |
           aws s3 ls
 
-      - name: Check s3
+      - name: Check docker login
         run: |
           eval $(aws ecr get-login --region $AWS_DEFAULT_REGION --no-include-email)
 
