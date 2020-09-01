@@ -42,7 +42,6 @@ jobs:
           DISABLE_PROMPT: "true"
           RUN_CONFORMANCE: "true"
           AWS_DEFAULT_REGION: "us-west-2"
-
         run: |
           echo $ECR_REGISTRY
           ./scripts/run-integration-tests.sh
