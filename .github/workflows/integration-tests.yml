@@ -68,7 +68,6 @@ jobs:
               status: 'in_progress',
               conclusion: process.env.conclusion
             });
-            return result;
 
       - name: Set up Go 1.14
         uses: actions/setup-go@v2
