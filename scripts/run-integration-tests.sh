@@ -155,6 +155,9 @@ mkdir -p "$REPORT_DIR"
 mkdir -p "$TEST_CLUSTER_DIR"
 mkdir -p "$TEST_CONFIG_DIR"
 
+#TODO: Disable test for now
+exit 0
+
 START=$SECONDS
 if [[ "$PROVISION" == true ]]; then
     START=$SECONDS

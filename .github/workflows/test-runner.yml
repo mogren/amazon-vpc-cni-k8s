@@ -49,5 +49,7 @@ jobs:
           RUN_CONFORMANCE: "true"
           AWS_DEFAULT_REGION: "us-west-2"
         run: |
-          ./scripts/run-integration-tests.sh
+          ./scripts/test-ginko-only.sh
+
+        #./scripts/run-integration-tests.sh
 
