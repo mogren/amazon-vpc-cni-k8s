@@ -4,8 +4,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  # Test stuff
-  test-permissions:
+  # Trigger a manual integration test on latest master
+  run-e2e-test:
     runs-on: self-hosted
 
     steps:
