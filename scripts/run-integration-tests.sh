@@ -70,6 +70,7 @@ CLUSTER_MANAGE_LOG_PATH=$TEST_CLUSTER_DIR/cluster-manage.log
 : "${TESTER_DIR:=${DIR}/aws-k8s-tester}"
 : "${TESTER_PATH:=$TESTER_DIR/aws-k8s-tester}"
 : "${KUBECTL_PATH:=$TESTER_DIR/kubectl}"
+export PATH=${PATH}:$TESTER_DIR
 
 LOCAL_GIT_VERSION=$(git describe --tags --always --dirty)
 # The manifest image version is the image tag we need to replace in the
@@ -154,9 +155,6 @@ mkdir -p "$TEST_DIR"
 mkdir -p "$REPORT_DIR"
 mkdir -p "$TEST_CLUSTER_DIR"
 mkdir -p "$TEST_CONFIG_DIR"
-
-#TODO: Disable test for now
-exit 0
 
 START=$SECONDS
 if [[ "$PROVISION" == true ]]; then
@@ -244,8 +242,7 @@ if [[ $TEST_PASS -eq 0 && "$RUN_CONFORMANCE" == true ]]; then
   START=$SECONDS
 
   GOPATH=$(go env GOPATH)
-  export PATH=${PATH}:$KUBECTL_PATH
-  echo $PATH
+  echo "PATH: $PATH"
 
   go install github.com/onsi/ginkgo/ginkgo
   wget -qO- https://dl.k8s.io/v$K8S_VERSION/kubernetes-test.tar.gz | tar -zxvf - --strip-components=4 -C ${TEST_BASE_DIR}  kubernetes/platforms/linux/amd64/e2e.test
