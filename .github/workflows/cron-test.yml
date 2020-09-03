@@ -27,6 +27,8 @@ jobs:
         env:
           DISABLE_PROMPT: "true"
           RUN_CONFORMANCE: "true"
-          AWS_DEFAULT_REGION: "us-west-2"
+          AWS_DEFAULT_REGION: ${{ secrets.AWS_DEFAULT_REGION }}
+          S3_BUCKET_CREATE: false
+          S3_BUCKET_NAME: ${{ secrets.S3_BUCKET_NAME }}
         run: |
           ./scripts/run-integration-tests.sh
