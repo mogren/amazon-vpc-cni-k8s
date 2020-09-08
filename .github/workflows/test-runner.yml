@@ -1,13 +1,13 @@
-name: Run e2e-tests every 2 hours
+name: Manual test runner workflow
 
 on:
-  schedule:
-    - cron: '0 */2 * * *'  # every 2h
+  workflow_dispatch:
 
 jobs:
-  # Run e2e tests on self-hosted runner
-  integration-cron:
+  # Test stuff
+  test-permissions:
     runs-on: self-hosted
+
     steps:
       - name: Set up Go 1.14
         uses: actions/setup-go@v2
