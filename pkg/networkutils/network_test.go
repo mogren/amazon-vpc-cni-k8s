@@ -170,7 +170,7 @@ func mockPrimaryInterfaceLookup(ctrl *gomock.Controller, mockNetLink *mock_netli
 	mockLinkAttrs1 := &netlink.LinkAttrs{
 		HardwareAddr: net.HardwareAddr{},
 	}
-	mockNetLink.EXPECT().LinkList().Return([]netlink.Link{lo}, nil)
+	mockNetLink.EXPECT().LinkList().AnyTimes().Return([]netlink.Link{lo}, nil)
 	lo.EXPECT().Attrs().AnyTimes().Return(mockLinkAttrs1)
 }
 
@@ -317,6 +317,13 @@ func TestLoadMTUFromEnvTooLow(t *testing.T) {
 	assert.Equal(t, GetEthernetMTU(""), minimumMTU)
 }
 
+func TestDisasableSNATCheckForPodENIEnv(t *testing.T) {
+	assert.Equal(t, enablePodENIEgress(), false)
+	_ = os.Setenv(envEnablePodENIEgress, "true")
+	assert.Equal(t, enablePodENIEgress(), true)
+	_ = os.Setenv(envEnablePodENIEgress, "false")
+}
+
 func TestLoadMTUFromEnv1500(t *testing.T) {
 	_ = os.Setenv(envMTU, "1500")
 	assert.Equal(t, GetEthernetMTU(""), 1500)
@@ -379,6 +386,36 @@ func TestSetupHostNetworkWithExcludeSNATCIDRs(t *testing.T) {
 				},
 			},
 		}, mockIptables.dataplaneState)
+
+	// Allow SNAT for pod ENIs:
+	_ = os.Setenv(envEnablePodENIEgress, "true")
+	mockProcSys.EXPECT().Set("net/ipv4/conf/lo/rp_filter", "2").Return(nil)
+
+	var mainENIRule netlink.Rule
+	mockNetLink.EXPECT().NewRule().AnyTimes().Return(&mainENIRule)
+	mockNetLink.EXPECT().RuleDel(&mainENIRule)
+	mockNetLink.EXPECT().RuleAdd(&mainENIRule)
+
+	err = ln.SetupHostNetwork(vpcCIDRs, loopback, &testENINetIP, false)
+	assert.NoError(t, err)
+	assert.Equal(t,
+		map[string]map[string][][]string{
+			"nat": {
+				"AWS-SNAT-CHAIN-0": [][]string{{"!", "-d", "10.10.0.0/16", "-m", "comment", "--comment", "AWS SNAT CHAIN", "-j", "AWS-SNAT-CHAIN-1"}},
+				"AWS-SNAT-CHAIN-1": [][]string{{"!", "-d", "10.11.0.0/16", "-m", "comment", "--comment", "AWS SNAT CHAIN", "-j", "AWS-SNAT-CHAIN-2"}},
+				"AWS-SNAT-CHAIN-2": [][]string{{"!", "-d", "10.12.0.0/16", "-m", "comment", "--comment", "AWS SNAT CHAIN EXCLUSION", "-j", "AWS-SNAT-CHAIN-3"}},
+				"AWS-SNAT-CHAIN-3": [][]string{{"!", "-d", "10.13.0.0/16", "-m", "comment", "--comment", "AWS SNAT CHAIN EXCLUSION", "-j", "AWS-SNAT-CHAIN-4"}},
+				"AWS-SNAT-CHAIN-4": [][]string{{"-m", "comment", "--comment", "AWS, SNAT", "-m", "addrtype", "!", "--dst-type", "LOCAL", "-j", "SNAT", "--to-source", "10.10.10.20"}},
+				"POSTROUTING":      [][]string{{"-m", "comment", "--comment", "AWS SNAT CHAIN", "-j", "AWS-SNAT-CHAIN-0"}}},
+			"mangle": {
+				"PREROUTING": [][]string{
+					{"-m", "comment", "--comment", "AWS, primary ENI", "-i", "lo", "-m", "addrtype", "--dst-type", "LOCAL", "--limit-iface-in", "-j", "CONNMARK", "--set-mark", "0x80/0x80"},
+					{"-m", "comment", "--comment", "AWS, primary ENI", "-i", "eni+", "-j", "CONNMARK", "--restore-mark", "--mask", "0x80"},
+					{"-m", "comment", "--comment", "AWS, primary ENI", "-i", "vlan+", "-j", "CONNMARK", "--restore-mark", "--mask", "0x80"},
+				},
+			},
+		}, mockIptables.dataplaneState)
+	_ = os.Setenv(envEnablePodENIEgress, "false")
 }
 
 func TestSetupHostNetworkCleansUpStaleSNATRules(t *testing.T) {
@@ -412,6 +449,7 @@ func TestSetupHostNetworkCleansUpStaleSNATRules(t *testing.T) {
 	_ = mockIptables.NewChain("nat", "AWS-SNAT-CHAIN-5")
 	_ = mockIptables.Append("nat", "POSTROUTING", "-m", "comment", "--comment", "AWS SNAT CHAIN", "-j", "AWS-SNAT-CHAIN-0")
 
+	_ = os.Setenv(envEnablePodENIEgress, "false")
 	vpcCIDRs := []string{"10.10.0.0/16", "10.11.0.0/16"}
 	err := ln.SetupHostNetwork(vpcCIDRs, loopback, &testENINetIP, false)
 	assert.NoError(t, err)
@@ -465,6 +503,7 @@ func TestSetupHostNetworkExcludedSNATCIDRsIdempotent(t *testing.T) {
 	_ = mockIptables.Append("nat", "AWS-SNAT-CHAIN-4", "-m", "comment", "--comment", "AWS, SNAT", "-m", "addrtype", "!", "--dst-type", "LOCAL", "-j", "SNAT", "--to-source", "10.10.10.20")
 	_ = mockIptables.Append("nat", "POSTROUTING", "-m", "comment", "--comment", "AWS SNAT CHAIN", "-j", "AWS-SNAT-CHAIN-0")
 
+	_ = os.Setenv(envEnablePodENIEgress, "false")
 	// remove exclusions
 	vpcCIDRs := []string{"10.10.0.0/16", "10.11.0.0/16"}
 	err := ln.SetupHostNetwork(vpcCIDRs, loopback, &testENINetIP, false)
@@ -597,7 +636,7 @@ func TestSetupHostNetworkUpdateLocalRule(t *testing.T) {
 
 func setupNetLinkMocks(ctrl *gomock.Controller, mockNetLink *mock_netlinkwrapper.MockNetLink) {
 	mockPrimaryInterfaceLookup(ctrl, mockNetLink)
-	mockNetLink.EXPECT().LinkSetMTU(gomock.Any(), testMTU).Return(nil)
+	mockNetLink.EXPECT().LinkSetMTU(gomock.Any(), testMTU).AnyTimes().Return(nil)
 
 	var mainENIRule netlink.Rule
 	mockNetLink.EXPECT().NewRule().Return(&mainENIRule)

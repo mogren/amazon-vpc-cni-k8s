@@ -69,6 +69,10 @@ const (
 	// Defaults to empty.
 	envExcludeSNATCIDRs = "AWS_VPC_K8S_CNI_EXCLUDE_SNAT_CIDRS"
 
+	// envEnablePodENIEgress allows traffic with destination outside the VPC and AWS_VPC_K8S_CNI_EXCLUDE_SNAT_CIDRS to
+	// get SNATed. Note that this will change the Security Group for Pods to be the Node Security group!
+	envEnablePodENIEgress = "DISABLE_EGRESS_CHECK_FOR_EXTERNAL_POD_ENI_TRAFFIC"
+
 	// This environment is used to specify weather the SNAT rule added to iptables should randomize port allocation for
 	// outgoing connections. If set to "hashrandom" the SNAT iptables rule will have the "--random" flag added to it.
 	// Use "prng" if you want to use pseudo random numbers, i.e. "--random-fully".
@@ -366,10 +370,13 @@ func (n *linuxNetwork) SetupHostNetwork(vpcCIDRs []string, primaryMAC string, pr
 	}
 
 	// Prepare the Desired Rule for SNAT Rule for non-pod ENIs
-	snatRule := []string{"!", "-o", "vlan+",
-		"-m", "comment", "--comment", "AWS, SNAT",
+	snatRule := []string{"-m", "comment", "--comment", "AWS, SNAT",
 		"-m", "addrtype", "!", "--dst-type", "LOCAL",
 		"-j", "SNAT", "--to-source", primaryAddr.String()}
+	if !enablePodENIEgress() {
+		excludePodENIs := []string{"!", "-o", "vlan+"}
+		snatRule = append(excludePodENIs, snatRule...)
+	}
 	if n.typeOfSNAT == randomHashSNAT {
 		snatRule = append(snatRule, "--random")
 	}
@@ -433,17 +440,6 @@ func (n *linuxNetwork) SetupHostNetwork(vpcCIDRs []string, primaryMAC string, pr
 		rule: []string{
 			"-m", "comment", "--comment", "AWS, primary ENI",
 			"-i", "eni+", "-j", "CONNMARK", "--restore-mark", "--mask", fmt.Sprintf("%#x", n.mainENIMark),
-		},
-	})
-
-	iptableRules = append(iptableRules, iptablesRule{
-		name:        "connmark restore for primary ENI from vlan",
-		shouldExist: n.nodePortSupportEnabled,
-		table:       "mangle",
-		chain:       "PREROUTING",
-		rule: []string{
-			"-m", "comment", "--comment", "AWS, primary ENI",
-			"-i", "vlan+", "-j", "CONNMARK", "--restore-mark", "--mask", fmt.Sprintf("%#x", n.mainENIMark),
 		},
 	})
 
@@ -552,13 +548,14 @@ func isRuleExistsError(err error) bool {
 // GetConfigForDebug returns the active values of the configuration env vars (for debugging purposes).
 func GetConfigForDebug() map[string]interface{} {
 	return map[string]interface{}{
-		envConfigureRpfilter: shouldConfigureRpFilter(),
-		envConnmark:          getConnmark(),
-		envExcludeSNATCIDRs:  getExcludeSNATCIDRs(),
-		envExternalSNAT:      useExternalSNAT(),
-		envMTU:               GetEthernetMTU(""),
-		envNodePortSupport:   nodePortSupportEnabled(),
-		envRandomizeSNAT:     typeOfSNAT(),
+		envConfigureRpfilter:  shouldConfigureRpFilter(),
+		envConnmark:           getConnmark(),
+		envExcludeSNATCIDRs:   getExcludeSNATCIDRs(),
+		envExternalSNAT:       useExternalSNAT(),
+		envEnablePodENIEgress: enablePodENIEgress(),
+		envMTU:                GetEthernetMTU(""),
+		envNodePortSupport:    nodePortSupportEnabled(),
+		envRandomizeSNAT:      typeOfSNAT(),
 	}
 }
 
@@ -571,6 +568,11 @@ func (n *linuxNetwork) UseExternalSNAT() bool {
 
 func useExternalSNAT() bool {
 	return getBoolEnvVar(envExternalSNAT, false)
+}
+
+// enablePodENIEgress
+func enablePodENIEgress() bool {
+	return getBoolEnvVar(envEnablePodENIEgress, false)
 }
 
 // GetExcludeSNATCIDRs returns a list of cidrs that should be excluded from SNAT if UseExternalSNAT is false,

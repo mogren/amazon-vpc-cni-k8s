@@ -424,6 +424,15 @@ Default: `false`
 To enable security groups for pods you need to have at least an EKS 1.17 eks.3 cluster. Setting `ENABLE_POD_ENI` to `true`
 will add the `vpc.amazonaws.com/has-trunk-attached` label to the node, signifying that the feature is enabled. 
 
+---
+
+`DISABLE_EGRESS_CHECK_FOR_EXTERNAL_POD_ENI_TRAFFIC` (Since v1.7.0)
+
+Default: `false`
+
+Used together with `ENABLE_POD_ENI` to enable traffic going outside of the VPC and `AWS_VPC_K8S_CNI_EXCLUDE_SNAT_CIDRS` 
+from Pods using per pod Security groups to get SNATed to the node IP. Note that this means the traffic will bypass the
+specified pod security group settings and instead get the node security group.
 
 ### ENI tags related to Allocation
 
