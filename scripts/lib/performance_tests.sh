@@ -209,7 +209,13 @@ function run_performance_test_730_pods() {
 }
 
 function scale_nodes_for_5000_pod_test() {
-    AUTO_SCALE_GROUP_NAME=$(aws autoscaling describe-auto-scaling-groups | jq --raw-output '.AutoScalingGroups[0].AutoScalingGroupName')
+    aws autoscaling describe-auto-scaling-groups
+    # AUTO_SCALE_GROUP_NAME=$(aws autoscaling describe-auto-scaling-groups | jq --raw-output '.AutoScalingGroups[0].AutoScalingGroupName')
+    echo "${CLUSTER_CONFIG}"
+    grep asg-name "${CLUSTER_CONFIG}"
+
+    AUTO_SCALE_GROUP_NAME=$(grep asg-name conf.yaml | awk '{print $2}')
+
     echo "$AUTO_SCALE_GROUP_NAME"
     aws autoscaling update-auto-scaling-group \
         --auto-scaling-group-name "$AUTO_SCALE_GROUP_NAME" \
