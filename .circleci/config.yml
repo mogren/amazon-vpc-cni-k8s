@@ -5,12 +5,13 @@ orbs:
   aws-cli: circleci/aws-cli@0.1.19
   k8s: circleci/kubernetes@0.11.0
   jq: circleci/jq@2.2.0
+  #go: circleci/go@1.4.0
 
 references:
   build_job: &build
     docker:
-      - image: circleci/golang:1.14-stretch
-    working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
+      - image: cimg/go:1.14
+    working_directory: ~/go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
     environment: &env
       GO111MODULE: "on"
     steps:
@@ -24,16 +25,17 @@ references:
       - run: make vet
       # TODO: Enable architecture specific unit-test when Circle CI supports it!
       - run: make unit-test ARCH=amd64
-      - run:
-          name: Upload Coverage Results
-          command: |
-            curl -s https://codecov.io/bash | bash -s -- \
-              -f "coverage.txt" \
-              -t "${CODECOV_TOKEN}" \
-              -n "${CIRCLE_BUILD_NUM}" \
-              -F "" \
-              -Z || echo 'Codecov upload failed'
-          when: always
+# Moved to TravisCI
+#      - run:
+#          name: Upload Coverage Results
+#          command: |
+#            curl -s https://codecov.io/bash | bash -s -- \
+#              -f "coverage.txt" \
+#              -t "${CODECOV_TOKEN}" \
+#              -n "${CIRCLE_BUILD_NUM}" \
+#              -F "" \
+#              -Z || echo 'Codecov upload failed'
+#          when: always
 
 jobs:
   build_x86_64:
@@ -54,8 +56,8 @@ jobs:
 
   integration_test:
     docker:
-      - image: circleci/golang:1.14-stretch
-    working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
+      - image: cimg/go:1.14
+    working_directory: ~/go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
     environment:
       <<: *env
       RUN_CONFORMANCE: "true"
@@ -85,8 +87,8 @@ jobs:
 
   performance_test:
     docker:
-      - image: circleci/golang:1.14-stretch
-    working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
+      - image: cimg/go:1.14
+    working_directory: ~/go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
     environment:
       <<: *env
       RUN_CONFORMANCE: "false"
@@ -118,8 +120,8 @@ jobs:
 
   kops_test:
     docker:
-      - image: circleci/golang:1.14-stretch
-    working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
+      - image: cimg/go:1.14
+    working_directory: ~/go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
     environment:
       <<: *env
       RUN_CONFORMANCE: "false"
@@ -150,8 +152,8 @@ jobs:
 
   warm_ip_test:
     docker:
-      - image: circleci/golang:1.14-stretch
-    working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
+      - image: cimg/go:1.14
+    working_directory: ~/go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
     environment:
       <<: *env
       RUN_WARM_IP_TEST: "true"
@@ -181,8 +183,8 @@ jobs:
 
   warm_eni_test:
     docker:
-      - image: circleci/golang:1.14-stretch
-    working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
+      - image: cimg/go:1.14
+    working_directory: ~/go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
     environment:
       <<: *env
       RUN_WARM_ENI_TEST: "true"
@@ -212,8 +214,8 @@ jobs:
 
   bottlerocket_test:
     docker:
-      - image: circleci/golang:1.14-stretch
-    working_directory: /go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
+      - image: cimg/go:1.14
+    working_directory: ~/go/src/github.com/{{ORG_NAME}}/{{REPO_NAME}}
     environment:
       <<: *env
       RUN_BOTTLEROCKET_TEST: "true"
@@ -243,15 +245,14 @@ jobs:
 
 workflows:
   version: 2
+  # TODO: Disable this build as well
   check:
     jobs:
       - build_x86_64
-      - build_aarch64
       - hold:
           type: approval
           requires:
             - build_x86_64
-            - build_aarch64
       - integration_test:
           requires:
             - hold
