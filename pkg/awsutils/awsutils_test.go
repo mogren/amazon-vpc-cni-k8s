@@ -24,6 +24,7 @@ import (
 	"testing"
 	"time"
 
+	"github.com/aws/aws-sdk-go/aws/request"
 	"github.com/aws/aws-sdk-go/service/ec2"
 	"github.com/golang/mock/gomock"
 	"github.com/stretchr/testify/assert"
@@ -59,7 +60,6 @@ const (
 	sg2                  = "sg-2e080f51"
 	sgs                  = sg1 + " " + sg2
 	subnetID             = "subnet-6b245523"
-	vpcCIDR              = "10.0.0.0/16"
 	subnetCIDR           = "10.0.1.0/24"
 	primaryeniID         = "eni-00000000"
 	eniID                = primaryeniID
@@ -68,7 +68,6 @@ const (
 	eni1PrivateIP        = "10.0.0.1"
 	eni2Device           = "1"
 	eni2PrivateIP        = "10.0.0.2"
-	eni2AttachID         = "eni-attach-fafdfafd"
 	eni2ID               = "eni-12341234"
 	metadataVPCIPv4CIDRs = "192.168.0.0/16	100.66.0.0/1"
 )
@@ -331,28 +330,64 @@ func TestTagEni(t *testing.T) {
 	assert.NoError(t, err)
 }
 
+func TestClusterNameTag(t *testing.T) {
+	ctrl, mockEC2 := setup(t)
+	defer ctrl.Finish()
+	_ = os.Setenv(clusterNameEnvVar, "cni-test")
+	tagKey1 := eniClusterTagKey
+	tagValue1 := "cni-test"
+	additionalEniTags := ec2.Tag{
+		Key:   &tagKey1,
+		Value: &tagValue1,
+	}
+	tags := []*ec2.Tag{
+		{
+			Key:   aws.String(eniNodeTagKey),
+			Value: aws.String(instanceID),
+		},
+	}
+	tags = append(tags, &additionalEniTags)
+	input := &ec2.CreateTagsInput{
+		Resources: []*string{
+			aws.String(eniID),
+		},
+		Tags: tags,
+	}
+
+	ins := &EC2InstanceMetadataCache{instanceID: instanceID, ec2SVC: mockEC2}
+	mockEC2.EXPECT().CreateTagsWithContext(gomock.Any(), input, gomock.Any()).Return(nil, nil)
+	ins.tagENI(eniID, time.Millisecond)
+	_ = os.Unsetenv(clusterNameEnvVar)
+}
+
 func TestAdditionalTagsEni(t *testing.T) {
 	ctrl, mockEC2 := setup(t)
 	defer ctrl.Finish()
 	_ = os.Setenv(additionalEniTagsEnvVar, `{"testKey": "testing"}`)
-	currentENIID := eniID
-	//result key
 	tagKey1 := "testKey"
-	//result value
 	tagValue1 := "testing"
-	tag := ec2.Tag{
+	additionalEniTags := ec2.Tag{
 		Key:   &tagKey1,
-		Value: &tagValue1}
-	result := &ec2.DescribeNetworkInterfacesOutput{
-		NetworkInterfaces: []*ec2.NetworkInterface{{TagSet: []*ec2.Tag{&tag}}}}
+		Value: &tagValue1,
+	}
+	tags := []*ec2.Tag{
+		{
+			Key:   aws.String(eniNodeTagKey),
+			Value: aws.String(instanceID),
+		},
+	}
+	tags = append(tags, &additionalEniTags)
+	input := &ec2.CreateTagsInput{
+		Resources: []*string{
+			aws.String(eniID),
+		},
+		Tags: tags,
+	}
 
-	ins := &EC2InstanceMetadataCache{ec2SVC: mockEC2}
-	mockEC2.EXPECT().CreateTagsWithContext(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil)
-	ins.tagENI(currentENIID, time.Millisecond)
-
-	// Verify the tags are registered.
-	assert.Equal(t, aws.StringValue(result.NetworkInterfaces[0].TagSet[0].Key), tagKey1)
-	assert.Equal(t, aws.StringValue(result.NetworkInterfaces[0].TagSet[0].Value), tagValue1)
+	ins := &EC2InstanceMetadataCache{instanceID: instanceID, ec2SVC: mockEC2}
+	mockEC2.EXPECT().CreateTagsWithContext(gomock.Any(), input, gomock.Any()).Return(nil, nil)
+	ins.tagENI(eniID, time.Millisecond)
+	os.Unsetenv(additionalEniTagsEnvVar)
 }
 
 func TestMapToTags(t *testing.T) {
@@ -606,28 +641,50 @@ func TestAllocIPAddresses(t *testing.T) {
 
 	// when required IP numbers(5) is below ENI's limit(30)
 	input := &ec2.AssignPrivateIpAddressesInput{
-		NetworkInterfaceId:             aws.String("eni-id"),
+		NetworkInterfaceId:             aws.String(eniID),
 		SecondaryPrivateIpAddressCount: aws.Int64(5),
 	}
 	mockEC2.EXPECT().AssignPrivateIpAddressesWithContext(gomock.Any(), input, gomock.Any()).Return(nil, nil)
 
 	ins := &EC2InstanceMetadataCache{ec2SVC: mockEC2, instanceType: "c5n.18xlarge"}
-	err := ins.AllocIPAddresses("eni-id", 5)
+	err := ins.AllocIPAddresses(eniID, 5)
 	assert.NoError(t, err)
 
 	// when required IP numbers(50) is higher than ENI's limit(49)
 	input = &ec2.AssignPrivateIpAddressesInput{
-		NetworkInterfaceId:             aws.String("eni-id"),
+		NetworkInterfaceId:             aws.String(eniID),
 		SecondaryPrivateIpAddressCount: aws.Int64(49),
 	}
-	mockEC2.EXPECT().AssignPrivateIpAddressesWithContext(gomock.Any(), input, gomock.Any()).Return(nil, nil)
+	addresses := make([]*ec2.AssignedPrivateIpAddress, 49)
+	output := ec2.AssignPrivateIpAddressesOutput{
+		AssignedPrivateIpAddresses: addresses,
+		NetworkInterfaceId:         aws.String(eniID),
+	}
+	mockEC2.EXPECT().AssignPrivateIpAddressesWithContext(gomock.Any(), input, gomock.Any()).Return(&output, nil)
 
 	ins = &EC2InstanceMetadataCache{ec2SVC: mockEC2, instanceType: "c5n.18xlarge"}
-	err = ins.AllocIPAddresses("eni-id", 50)
+	err = ins.AllocIPAddresses(eniID, 50)
 	assert.NoError(t, err)
 
 	// Adding 0 should do nothing
-	err = ins.AllocIPAddresses("eni-id", 0)
+	err = ins.AllocIPAddresses(eniID, 0)
+	assert.NoError(t, err)
+}
+
+func TestAllocIPAddressesAlreadyFull(t *testing.T) {
+	ctrl, mockEC2 := setup(t)
+	defer ctrl.Finish()
+	// The required IP numbers(14) is the ENI's limit(14)
+	input := &ec2.AssignPrivateIpAddressesInput{
+		NetworkInterfaceId:             aws.String(eniID),
+		SecondaryPrivateIpAddressCount: aws.Int64(14),
+	}
+	ins := &EC2InstanceMetadataCache{ec2SVC: mockEC2, instanceType: "t3.xlarge"}
+
+	retErr := awserr.New("PrivateIpAddressLimitExceeded", "Too many IPs already allocated", nil)
+	mockEC2.EXPECT().AssignPrivateIpAddressesWithContext(gomock.Any(), input, gomock.Any()).Return(nil, retErr)
+	// If EC2 says that all IPs are already attached, we do nothing
+	err := ins.AllocIPAddresses(eniID, 14)
 	assert.NoError(t, err)
 }
 
@@ -655,10 +712,8 @@ func TestEC2InstanceMetadataCache_getFilteredListOfNetworkInterfaces_OneResult(t
 	attachment := &ec2.NetworkInterfaceAttachment{AttachmentId: &attachmentID}
 	cureniID := eniID
 
-	result := &ec2.DescribeNetworkInterfacesOutput{
-		NetworkInterfaces: []*ec2.NetworkInterface{{Attachment: attachment, Status: &status, TagSet: tag, Description: &description, NetworkInterfaceId: &cureniID}}}
-	mockEC2.EXPECT().DescribeNetworkInterfacesWithContext(gomock.Any(), gomock.Any(), gomock.Any()).Return(result, nil)
-
+	interfaces := []*ec2.NetworkInterface{{Attachment: attachment, Status: &status, TagSet: tag, Description: &description, NetworkInterfaceId: &cureniID}}
+	setupDescribeNetworkInterfacesPagesWithContextMock(t, mockEC2, interfaces, nil, 1)
 	ins := &EC2InstanceMetadataCache{ec2SVC: mockEC2}
 	got, err := ins.getFilteredListOfNetworkInterfaces()
 	assert.NotNil(t, got)
@@ -669,10 +724,7 @@ func TestEC2InstanceMetadataCache_getFilteredListOfNetworkInterfaces_NoResult(t 
 	ctrl, mockEC2 := setup(t)
 	defer ctrl.Finish()
 
-	result := &ec2.DescribeNetworkInterfacesOutput{
-		NetworkInterfaces: []*ec2.NetworkInterface{}}
-	mockEC2.EXPECT().DescribeNetworkInterfacesWithContext(gomock.Any(), gomock.Any(), gomock.Any()).Return(result, nil)
-
+	setupDescribeNetworkInterfacesPagesWithContextMock(t, mockEC2, []*ec2.NetworkInterface{}, nil, 1)
 	ins := &EC2InstanceMetadataCache{ec2SVC: mockEC2}
 	got, err := ins.getFilteredListOfNetworkInterfaces()
 	assert.Nil(t, got)
@@ -683,7 +735,12 @@ func TestEC2InstanceMetadataCache_getFilteredListOfNetworkInterfaces_Error(t *te
 	ctrl, mockEC2 := setup(t)
 	defer ctrl.Finish()
 
-	mockEC2.EXPECT().DescribeNetworkInterfacesWithContext(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, errors.New("dummy error"))
+	interfaces := []*ec2.NetworkInterface{{
+		TagSet: []*ec2.Tag{
+			{Key: aws.String("foo"), Value: aws.String("foo-value")},
+		},
+	}}
+	setupDescribeNetworkInterfacesPagesWithContextMock(t, mockEC2, interfaces, errors.New("dummy error"), 1)
 
 	ins := &EC2InstanceMetadataCache{ec2SVC: mockEC2}
 	got, err := ins.getFilteredListOfNetworkInterfaces()
@@ -801,19 +858,30 @@ func TestEC2InstanceMetadataCache_cleanUpLeakedENIsInternal(t *testing.T) {
 	defer ctrl.Finish()
 
 	description := eniDescriptionPrefix + "test"
-	result := &ec2.DescribeNetworkInterfacesOutput{
-		NetworkInterfaces: []*ec2.NetworkInterface{{
-			Description: &description,
-			TagSet: []*ec2.Tag{
-				{Key: aws.String(eniNodeTagKey), Value: aws.String("test-value")},
-			},
-		}},
-	}
+	interfaces := []*ec2.NetworkInterface{{
+		Description: &description,
+		TagSet: []*ec2.Tag{
+			{Key: aws.String(eniNodeTagKey), Value: aws.String("test-value")},
+		},
+	}}
 
-	mockEC2.EXPECT().DescribeNetworkInterfacesWithContext(gomock.Any(), gomock.Any(), gomock.Any()).Return(result, nil)
+	setupDescribeNetworkInterfacesPagesWithContextMock(t, mockEC2, interfaces, nil, 1)
 	mockEC2.EXPECT().CreateTagsWithContext(gomock.Any(), gomock.Any(), gomock.Any()).Return(nil, nil)
 
 	ins := &EC2InstanceMetadataCache{ec2SVC: mockEC2}
 	// Test checks that both mocks gets called.
 	ins.cleanUpLeakedENIsInternal(time.Millisecond)
+}
+
+func setupDescribeNetworkInterfacesPagesWithContextMock(
+	t *testing.T, mockEC2 *mock_ec2wrapper.MockEC2, interfaces []*ec2.NetworkInterface, err error, times int) {
+	mockEC2.EXPECT().
+		DescribeNetworkInterfacesPagesWithContext(gomock.Any(), gomock.Any(), gomock.Any(), gomock.Any()).Times(times).
+		DoAndReturn(func(_ context.Context, _ *ec2.DescribeNetworkInterfacesInput,
+			fn func(*ec2.DescribeNetworkInterfacesOutput, bool) bool, userAgent request.Option) error {
+			assert.Equal(t, true, fn(&ec2.DescribeNetworkInterfacesOutput{
+				NetworkInterfaces: interfaces,
+			}, true))
+			return err
+		})
 }
